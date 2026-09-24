@@ -15,14 +15,13 @@
  *
  * VERSIONS is what is on offer, in the order it is offered in: the row is numbered by
  * position, so this array is the running order and nothing else needs to know about it.
- * The Version union is what the code can still run — 3, 6, 7, 9, 10 and 17 were set aside
- * rather than deleted, so their behaviour is still built and still reachable from the
+ * The Version union is what the code can still run — 3, 6, 7, 9, 10, 11 and 17 were set
+ * aside rather than deleted, so their behaviour is still built and still reachable from the
  * predicates below. Putting one back on the row is a single line here.
  */
 export type Version = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17;
 
 export const VERSIONS: { id: Version; name: string; note: string; label?: string; final?: true }[] = [
-  { id: 11, name: "Caret: jump", note: "The caret simply appears in the next cell — no travel at all" },
   { id: 13, name: "Vanishing letters", note: "The digit rises in through the cell's bottom edge, and slides back down past it" },
   { id: 12, name: "Caret: smear", note: "The caret stretches into a block as it travels, then snaps back to a line" },
   { id: 1, name: "Version 1", note: "Send box on the end of the strip; digits rise into place" },
