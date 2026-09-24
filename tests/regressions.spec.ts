@@ -138,6 +138,26 @@ test.describe("regressions", () => {
     await expect(f.problem).toHaveText("Couldn't verify your code. Try again.", VERDICT);
   });
 
+  test("Backspace after a rejection clears in place, then steps back", async ({ page }) => {
+    // A refusal used to put deletion into a second mode where every press stepped back,
+    // on the reasoning that a refused code is being cleared rather than corrected. It has
+    // not behaved that way since the three entry points were consolidated, and this is
+    // what it does: the same two rules as anywhere else, refused or not.
+    const f = await Field.open(page);
+    await f.type(Field.WRONG);
+    await f.press("Enter");
+    await expect(f.problem).toHaveText("Incorrect code. Try again.", VERDICT);
+    expect(await f.focusedCell()).toBe(3);        // the rejection hands the caret back
+
+    await f.press("Backspace");                   // a filled cell: cleared, caret stays
+    expect(await f.code()).toBe("999_");
+    expect(await f.focusedCell()).toBe(3);
+
+    await f.press("Backspace");                   // now empty: step back and clear that
+    expect(await f.code()).toBe("99__");
+    expect(await f.focusedCell()).toBe(2);
+  });
+
   test("the field writes nothing to the document", async ({ page }) => {
     // the tokens lived on :root, so dropping the field into an app put --ease-out and
     // --pk-focus into the document's scope for anything else to collide with

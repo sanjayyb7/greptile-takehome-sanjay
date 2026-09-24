@@ -160,7 +160,7 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
       setShake((n) => n + 1);
       setProblem("offline");
       setStatus("idle");
-      if (handsBackOnError) { clearing.current = true; focusAt(length - 1); }
+      if (handsBackOnError) focusAt(length - 1);
       return;
     }
     if (ok) {
@@ -176,7 +176,7 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     // and where the caret lands is ours: the press moved it to the button, and the button
     // is about to go, so it has to be given somewhere to be. The last cell is the one a
     // Backspace would take first.
-    if (handsBackOnError) { clearing.current = true; focusAt(length - 1); }
+    if (handsBackOnError) focusAt(length - 1);
   }, [busy, focusAt, handsBackOnError, length, onSuccess, onVerify]);
 
   // the resend cooldown ticks whenever one is running
@@ -237,7 +237,6 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     setStatus((s) => (s === "error" ? "idle" : s));   // the rejection was about the old code
     setProblem(null);                                 // and so was the message
     setStale(false);                                  // the digits are theirs again
-    clearing.current = false;                         // Backspace goes back to correcting
   }, []);
 
   const write = useCallback((i: number, raw: string) => {
@@ -284,17 +283,6 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
   const erasePace = useRef<number | null>(null);
   /** the key the run belongs to, so the run ends when that key comes up and not another */
   const runKey = useRef<string | null>(null);
-  /**
-   * Whether the code on screen is one to get rid of rather than one to correct.
-   *
-   * Backspace means two different things depending on the answer. On a complete code it
-   * is a correction — clear the cell and stay in it, because the replacement goes where
-   * the old digit was. On a code that has just been refused it is a clearance — clear the
-   * cell and step back, because the next thing wanted is the digit before, not this one
-   * again. Set by a rejection and unset by the first digit typed after it.
-   */
-  const clearing = useRef(false);
-
   const endRun = useRef<(e: KeyboardEvent) => void>(() => {});
   const stopRun = useRef<() => void>(() => {});
 
@@ -331,9 +319,10 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     const back = () => { focusedRef.current = i - 1; focusAt(i - 1); };
     // The caret holds its place on a cell it has just emptied, the way a text field does:
     // what you deleted is where the replacement goes. Only a press on a cell that is
-    // already empty steps back — unless the code is being cleared rather than corrected,
-    // when every press steps back, because nothing here is going to be typed over.
-    if (next[i]) { next[i] = ""; if (clearing.current && i > 0) back(); }
+    // already empty steps back. The same two rules whatever has happened — a refused code
+    // is still a code being corrected, and one that once behaved differently here was a
+    // second mode to learn for no gain.
+    if (next[i]) next[i] = "";
     else if (i > 0) { next[i - 1] = ""; back(); }
     else return false;
     setAll(next);

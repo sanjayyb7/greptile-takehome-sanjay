@@ -60,9 +60,10 @@ confirming it fails.
   turns red for exactly as long as the shake lasts. The red lifts; the line underneath
   stays until something is edited. The code stays on screen too: clearing it is the
   person's move
-- **Backspace after a rejection** — clears and steps back each press, because the code on
-  screen is one to get rid of. On a complete code it clears in place instead, because
-  there the replacement goes where the old digit was
+- **Backspace** — clears the cell it is in and stays there, the way a text field does:
+  what you deleted is where the replacement goes. Only a press on a cell that is already
+  empty steps back. The same two rules whatever has happened, a refused code included —
+  that is still a code being corrected
 - **Hold a digit, or hold Backspace** — the field fills and empties a cell at a time at the
   same cadence, driven here rather than by the OS key repeat
 - **Click a cell three along** — the block spans the whole journey rather than jumping
@@ -172,9 +173,9 @@ on), `send` offers the arrow button once the code is complete (default on), and
 
 ### The state machine, without the markup
 
-`usePasskey` holds `idle → verifying → success | error`, the hold-to-repeat runs, the two
-Backspace modes, paste handling and the resend cooldown, and renders nothing. It will
-drive a strip of your own:
+`usePasskey` holds `idle → verifying → success | error`, the hold-to-repeat runs, the
+deletion rules, paste handling and the resend cooldown, and renders nothing. It will drive
+a strip of your own:
 
 ```tsx
 const { digits, status, problem, cells, onKeyDown, onPaste, submit } =
