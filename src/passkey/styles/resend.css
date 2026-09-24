@@ -1,7 +1,12 @@
 /* The resend line */
 
-.pk-resend { align-self: flex-start; margin: 6px 0 0; color: #858585;
+.pk-resend { align-self: center; margin: 6px 0 0; color: #858585;
   font-family: "Inter", system-ui, sans-serif; font-size: 15px; line-height: 20px; }
+/* Closer to the failure than the column's 16px gap allows. The message and the offer are
+   one thought — this went wrong, here is the way on — and at a full gap apart they read as
+   two unrelated lines stacked under the strip. Only when there IS a message: with none,
+   the offer belongs at arm's length from the cells. */
+.pk-problem + .pk-resend { margin-top: -8px; }
 .pk-resend button { padding: 0; border: 0; background: none; font: inherit; cursor: pointer;
   color: var(--pk-focus); text-decoration: underline; text-underline-offset: 3px;
   transition: opacity .15s ease; }
