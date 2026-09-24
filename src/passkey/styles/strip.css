@@ -49,9 +49,8 @@
    The message now appears in space that was already reserved, and only the resend line
    below it moves.
 
-   It is a variable rather than a literal because the harness needs the same number: the
-   switcher would otherwise centre a 218px field and a 256px one in the same row, which
-   moved the strip 19px every time you changed version. */
+   It is a variable rather than a literal because the page needs the same number to hold
+   the field's slot — see src/styles.css. */
 .passkey { --pk-tallest: calc(32px + 128px + 22px + 20px + 6px + 3 * 16px); }
 .passkey { min-height: var(--pk-tallest); }
 
@@ -154,26 +153,8 @@
 /* the exit is the entrance in reverse and is run from PasskeyCells for the same reason:
    it takes the length of the block that is crossing the cell, which is not a fixed number */
 
-
-/* The vanishing letters: the travel is the whole effect, so it is a long one. 92px starts
-   the glyph wholly below the cell, which is what makes it come up THROUGH the bottom edge
-   rather than fade in somewhere near the middle — and, going the other way, slide down
-   past that edge and be gone. Nothing fades and nothing scales; .pk-clip is what takes
-   it, so the cell's own edge does the vanishing. */
-/* The caret's own explorations. "jump" needs no rule — the caret is declared without a
-   transition, because the kept version moves the block and not the bar. */
-/* smear: the same travel, and it stretches into a block as it goes.
-   ease-in-out, not ease-out: it is moving point to point on screen rather than entering,
-   so it gathers pace and settles instead of bolting and coasting.
-   42 is the cell pitch over the caret's width (84 / 2): at the halfway point the block is
-   exactly one cell wide, so it spans the cell it left and the one it is entering — the
-   two positions are bridged rather than merely passed between. The peak is at 50% so the
-   widest moment lands with the caret midway, matching the travel's own curve. */
-@keyframes pk-caret-smear {
-  0%   { scale: 1 1; }
-  50%  { scale: var(--pk-caret-stretch, 42) .9; }
-  100% { scale: 1 1; }
-}
+/* The caret does not travel — the block does — so it is declared without a transition and
+   simply is where typing lands. */
 
 /* active slot lifts out of the strip — only while the field accepts input, so settled
    states keep the strip's own corners instead of having the ring reset them */

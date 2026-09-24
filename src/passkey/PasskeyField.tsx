@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { PasskeyCells } from "./PasskeyCells";
 import { PasskeyResend } from "./PasskeyResend";
 import { StatusIcon } from "./StatusIcon";
@@ -47,7 +47,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
   /** check the code — the stand-in answers to 1234 until something real is passed */
   onVerify?: (code: string) => Promise<boolean>;
   /** ask for a new code, and how long before another can be asked for */
-  onResend?: () => Promise<void>;
+  onResend?: () => Promise<unknown>;
   resendCooldown?: number;
   /** where a new code is sent — named in the confirmation, where it is the whole point */
   resendTo?: string;
@@ -65,13 +65,8 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
   const { status, shake, focusAt } = passkey;
   const below = problem(passkey, length);
   // success runs in two phases: the cells leave first, then the mark arrives
-  const [phase, setPhase] = useState<"none" | "clearing" | "collapsing" | "done" | "settled">("none");
-  const statusRef = useRef<HTMLParagraphElement>(null);
+  const [phase, setPhase] = useState<"none" | "clearing" | "done" | "settled">("none");
   const rootRef = useRef<HTMLDivElement>(null);
-  const before = useRef<DOMRect | null>(null);
-  // the hand-off style is set on the element by the dev panel; these two run their own
-  // sequence, holding the strip's space so the line has somewhere to travel to
-  const sequenced = useRef(false);
 
   useEffect(() => { if (autoFocus) focusAt(0); }, [autoFocus, focusAt]);
 
@@ -88,91 +83,32 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
   }, [shake, status]);
 
   /*
-   * The shipped hand-off and spinner, written on the node rather than rendered.
+   * The success sequence, as one timeline measured from the moment verification lands:
    *
-   * These are not dev toggles with a dev default — v2 and wave ARE the behaviour, and
-   * everything else on data-mark is an alternative to compare against. Without them the
-   * field falls back to the "swish" rules, whose tick never appears: it is revealed by a
-   * clip-path, and a clip-path on an SVG <g> resolves against that group's own fill box,
-   * which for the tick is 10x7 — the 6.5/5.5 insets close over it completely. That is a
-   * blank checkbox next to "Authenticated", in every build without the dev panel.
+   *      0ms  GATHER   the cells and the arrow fade over 160ms while the eight spokes
+   *                    stop waving and pull into their shared centre over 280ms
+   *    280ms  COMBINE  the solid dot holds still for 80ms, so the merge is perceptible
+   *    360ms  EXPAND   that same dot opens into the square, and the tick is drawn across
+   *   1000ms  DROP     the mark and the label travel down into the cells' place
    *
-   * Set here and not in JSX because the dev panel owns these attributes once it has
-   * written to them; rendered, every phase change would snatch them back mid-sequence.
-   * Set on mount and only when absent, so anything that wrote to the node before us keeps
-   * what it wrote.
+   * Two hand-off points, held here; every other beat is offset from them in the
+   * stylesheet. 360 is gather + combine; 1000 leaves the tick a clear 280ms to finish, so
+   * the line is seen to complete before anything travels.
    */
-  useLayoutEffect(() => {
-    const el = rootRef.current;
-    if (!el) return;
-    el.dataset.mark ||= "v2";
-    el.dataset.spin ||= "wave";
-  }, []);
-
   useEffect(() => {
     if (status !== "success") return;
-    const mark = rootRef.current?.dataset.mark;
-    const SEQUENCES: Record<string, { done: number; settled: number }> = {
-      v1: { done: 440, settled: 1080 },   // gather 300, hold 140, mark, hold, travel 440
-      // gather 280 + combine 80 = 360, then expand 160 + tick 200 = 360, then hold 280.
-      // The tick always finished before the drop, but by 140ms — eight frames, which
-      // reads as one continuous event rather than a line completing and then moving.
-      // Doubled, the finish lands on its own before anything travels.
-      v2: { done: 360, settled: 1000 },
-    };
-    const seq = mark ? SEQUENCES[mark] : undefined;
-    sequenced.current = Boolean(seq);
-
-    // the wait is the point of the verification, so it is kept; only the transformation
-    // is dropped, landing straight on the state it would have arrived at
+    // the wait is the point of the verification, so it is kept; only the transformation is
+    // dropped, landing straight on the state it would have arrived at
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setPhase("settled");
       return;
     }
-
-    if (seq) {
-      setPhase("clearing");                                              // 0ms  cells fade, spokes gather
-      const a = window.setTimeout(() => setPhase("done"), seq.done);     //      dot opens into the mark
-      const b = window.setTimeout(() => setPhase("settled"), seq.settled); //    line travels down
-      return () => { clearTimeout(a); clearTimeout(b); };
-    }
-
-    setPhase("clearing");                                            // 0ms    cells snap shut
-    const t1 = window.setTimeout(() => {                             // 110ms  their space closes
-      before.current = statusRef.current?.getBoundingClientRect() ?? null;
-      setPhase("collapsing");
-    }, 110);
-    const t2 = window.setTimeout(() => setPhase("done"), 290);       // 290ms  the mark arrives
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    setPhase("clearing");
+    const a = window.setTimeout(() => setPhase("done"), 360);
+    const b = window.setTimeout(() => setPhase("settled"), 1000);
+    return () => { clearTimeout(a); clearTimeout(b); };
   }, [status]);
 
-  // FLIP: the strip's space closes in one frame, then the line is animated from where it
-  // used to be back to where it now is — a transform, so nothing animates layout.
-  useLayoutEffect(() => {
-    if (phase !== "collapsing") return;
-    const el = statusRef.current;
-    const from = before.current;
-    before.current = null;
-    if (!el || from === null) return;
-    const now = el.getBoundingClientRect();
-    const dy = from.top - now.top;
-    // the send box goes with the cells, so the line loses the offset that kept it centred
-    // on the wider field at the same moment: carried in the same FLIP, the two are one
-    // move to the centre rather than a drop with a sideways drift laid over it
-    const dx = from.left - now.left;
-    if (!dx && !dy) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    // the component's own curve, read off the element: a second, weaker ease-out
-    // hardcoded here meant two curves doing one job
-    const easing = getComputedStyle(el).getPropertyValue("--ease-out").trim() || "ease-out";
-    el.animate(
-      [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "translate(0, 0)" }],
-      { duration: 180, easing },
-    );
-  }, [phase]);
-
-  // the sequenced styles hold the strip so its space stays reserved to travel into
-  const stripMounted = sequenced.current || phase === "none" || phase === "clearing";
   const above = phase === "done" || phase === "settled" ? "Authenticated" : progress(passkey);
 
   // A swap needs both lines on screen at once, so the one being replaced is kept for as
@@ -220,7 +156,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
         </filter>
       </svg>
       {/* the row keeps its height in every state so the strip never jumps */}
-      <p className="pk-status" ref={statusRef} role="status" aria-live="polite">
+      <p className="pk-status" role="status" aria-live="polite">
         {above && (
           <>
             <StatusIcon status={status} />
@@ -241,13 +177,9 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
           </>
         )}
       </p>
-      {stripMounted && (
-        <PasskeyCells
-          passkey={passkey}
-          length={length}
-          send={send}
-        />
-      )}
+      {/* the strip stays mounted through the whole sequence: its space is what the
+          status line travels down into, so it is faded rather than removed */}
+      <PasskeyCells passkey={passkey} length={length} send={send} />
       {/* keyed on the shake counter so the copy re-enters on every rejection, even when
           the same message text repeats */}
       {below && (

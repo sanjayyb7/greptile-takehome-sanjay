@@ -38,8 +38,15 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
    * be pointed at something real without being edited.
    */
   onVerify?: (code: string) => Promise<boolean>;
-  /** Ask for a new code. The default is the stand-in; a real one goes here. */
-  onResend?: () => Promise<void>;
+  /**
+    * Ask for a new code. The default is the stand-in; a real one goes here.
+    *
+    * Whatever it resolves to is ignored — only settling matters, and rejecting is how it
+    * says the send failed. Typed as unknown rather than void so a bare `() => fetch(...)`
+    * is accepted: requiring void would make every caller wrap a one-line call to say
+    * nothing.
+    */
+  onResend?: () => Promise<unknown>;
   /** and how long before another can be asked for, in seconds */
   resendCooldown?: number;
   /** submit as soon as the last cell is filled; Enter always submits regardless */

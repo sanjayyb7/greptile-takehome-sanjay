@@ -128,43 +128,81 @@ byte what it was before.
 
 ## Using it
 
-The field is a component, not a demo, and it comes apart into three layers. Take whichever
-one you need:
+The field is a component, not a demo, and it comes apart into two layers. Take whichever
+one you need.
 
-**The whole thing.** Everything it does not own is a prop:
+### Everything it does not own is a prop
 
 ```tsx
 import { PasskeyField } from "./passkey";
 
-<PasskeyField
-  onVerify={(code) => api.verify(code)}   // anything resolving true or false
-  onResend={() => api.sendNewCode()}
-  resendCooldown={60}                     // seconds before another can be asked for
-  length={6}
-  onSuccess={(code) => …}
-/>
+function SignIn() {
+  return (
+    <PasskeyField
+      // Check the code. Resolve true to accept, false to refuse — and REJECT if the
+      // check could not be made at all. The field keeps those apart: a refusal says
+      // "Incorrect code", a rejection says "Couldn't verify your code", and only one
+      // of them means retype it.
+      onVerify={async (code) => {
+        const res = await fetch("/api/verify", {
+          method: "POST",
+          body: JSON.stringify({ code }),
+        });
+        if (!res.ok) throw new Error("could not reach the server");   // → offline
+        return (await res.json()).valid;                              // → true / false
+      }}
+
+      // Send a new code. Reject and the confirmation stays open saying so, with nothing
+      // spent: no cooldown is armed and it can be retried from inside the dialog.
+      onResend={() => fetch("/api/resend", { method: "POST" })}
+
+      resendTo="sanjay@example.com"   // named in the confirmation, so it can be checked
+      resendCooldown={60}             // seconds before another can be asked for
+      length={6}                      // cells; the strip and the copy both follow it
+
+      onSuccess={(code) => router.push("/dashboard")}
+    />
+  );
+}
 ```
 
-Left out, `onVerify` and `onResend` fall back to the stand-ins in `verifyPasscode.ts`,
-which is what makes the demo answer to `1234`.
+Every prop is optional. `autoFocus` puts the caret in the first cell on mount (default
+on), `send` offers the arrow button once the code is complete (default on), and
+`autoSubmit` submits on the last digit instead — Enter submits either way.
 
-**The machine, without the markup.** `usePasskey` holds `idle → verifying → success |
-error`, the hold-to-repeat runs, the two Backspace modes and the resend cooldown, and
-renders nothing. It will drive a strip of your own:
+### The state machine, without the markup
+
+`usePasskey` holds `idle → verifying → success | error`, the hold-to-repeat runs, the two
+Backspace modes, paste handling and the resend cooldown, and renders nothing. It will
+drive a strip of your own:
 
 ```tsx
-const { digits, status, cells, onKeyDown, onPaste, submit } =
+const { digits, status, problem, cells, onKeyDown, onPaste, submit } =
   usePasskey({ length: 6, onVerify });
 ```
 
-**Styling.** Every token is declared on `.passkey` rather than `:root`, so dropping the
-field into an app cannot collide with its variables. Override them by setting the same
-names on the field or anything above it — `--pk-focus`, `--pk-face`, `--pk-line`,
-`--pk-ink`, `--pk-bad` for colour; `--pk-cell-w` and the `--pk-*-ms` family for size and
-timing. Two fields on one page are independent; nothing reaches into the document to find
-its own parts.
+### What is demo behaviour, and what is not
 
+`verifyPasscode.ts` is a stand-in for a real service and is the **only** file that has to
+go. Nothing else in `src/passkey/` knows what a correct code is.
 
+| | |
+| --- | --- |
+| **`1234` is accepted** | Only because `verifyPasscode` says so. Pass `onVerify` and it is never consulted. |
+| **`0000` fails to connect** | A reserved code that makes the stand-in *reject* rather than answer, so the offline path can be reached by typing. Real code would reject on a network error. |
+| **The resend always succeeds** | `requestNewCode` resolves after 900ms. `?resendfail` makes the first attempt fail so the recovery can be seen. |
+| **The two-second wait** | `VERIFY_MS`, there to make the verifying state visible. A real call takes as long as it takes. |
+| **`you@example.com`** | The `resendTo` default. Pass the real address. |
+| **`?len=` and `?auto`** | Read in `src/main.tsx`, the demo page; **`?resendfail`** in `verifyPasscode.ts`. The component knows nothing about any of them. |
+
+### Styling
+
+Every token is declared on `.passkey` rather than `:root`, so dropping the field into an
+app cannot collide with its variables. Override them by setting the same names on the
+field or anything above it — `--pk-focus`, `--pk-face`, `--pk-line`, `--pk-ink`,
+`--pk-bad` for colour; `--pk-cell-w` and the `--pk-*-ms` family for size and timing. Two
+fields on one page are independent: every id the field writes is generated, and nothing
+reaches into the document to find its own parts.
 
 ## Decisions worth naming
 

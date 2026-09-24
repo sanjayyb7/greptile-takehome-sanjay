@@ -70,9 +70,8 @@
      opacity alone, pinned at the resting radius, so nothing moves. The per-spoke delay
      survives, so the light still travels round the ring. */
   .passkey[data-state="verifying"] .pk-spoke,
-  .passkey[data-mark="v2"][data-state="verifying"] .pk-spoke,
-  .passkey[data-phase="clearing"] .pk-spoke,
-  .passkey[data-phase="collapsing"] .pk-spoke {
+  .passkey[data-state="verifying"] .pk-spoke,
+  .passkey[data-phase="clearing"] .pk-spoke {
     animation-name: pk-spoke-pulse; animation-duration: 1.8s; }
   @keyframes pk-spoke-pulse {
     0%, 100% { transform: rotate(calc(var(--a) * 1deg)) translate(0, -10px); opacity: 1; }
@@ -86,11 +85,11 @@
   .pk-digit-out { display: none; }      /* and clear immediately, no lingering ghost */
   /* the caret keeps blinking — it signals where typing lands — but stops travelling */
   .pk-caret-wipe { display: none; }
-  .passkey[data-mark="v2"][data-phase="settled"] .pk-status { transition: none; translate: 0 96px; }
-  /* the sequenced hand-offs animate the spokes with their own keyframes, which outrank
-     the general rule below on specificity */
-  .passkey[data-mark="v2"][data-phase] .pk-spoke { animation: none; opacity: 0; }
-  .passkey[data-mark="v2"][data-phase] .pk-strip { animation: none; opacity: 0; }
+  .passkey[data-phase="settled"] .pk-status { transition: none; translate: 0 96px; }
+  /* the hand-off animates the spokes with its own keyframes, which outrank the general
+     rule below on specificity */
+  .passkey[data-phase] .pk-spoke { animation: none; opacity: 0; }
+  .passkey[data-phase] .pk-strip { animation: none; opacity: 0; }
   .pk-problem, .pk-status-text, .pk-send, .pk-send svg { animation: none; }
   /* the box opens and closes from JS, which skips it entirely under reduced motion —
      so the closed state it starts from has to be undone here or it never shows */
@@ -98,7 +97,7 @@
   .pk-resend[data-swap] { animation: none; }
   .pk-resend button { animation: none; }   /* the colour stays — it carries the affordance */
   .pk-spoke, .pk-check-wall, .pk-check-tick, .pk-check, .pk-spinner { transition: none; }
-  .passkey[data-mark="v2"] .pk-check-tick { stroke-dashoffset: 0; }
+  .passkey .pk-check-tick { stroke-dashoffset: 0; }
   .pk-check { filter: none; }
   .pk-check-tick { clip-path: inset(6.5px 4.5px 5.5px 4.5px); }
 }

@@ -44,18 +44,12 @@
    It keeps turning while the cells leave, so the wait never looks finished early. */
 .passkey[data-state="verifying"] .pk-spinner,
 .passkey[data-state="success"] .pk-spinner { opacity: 1; }
+/* Each pin brightens and ticks outward as the light reaches it. Delays rise with the
+   index so the bright one walks clockwise; all stay negative so no spoke waits out its
+   first cycle. It keeps turning while the cells leave, so the wait never looks finished
+   early. */
 .passkey[data-state="verifying"] .pk-spoke,
-.passkey[data-phase="clearing"] .pk-spoke,
-.passkey[data-phase="collapsing"] .pk-spoke { animation: pk-trail .9s linear infinite;
-  /* delays rise with the index so the bright spoke walks clockwise; all stay negative so
-     no spoke waits for its first cycle */
-  animation-delay: calc((var(--i) - 7) * 112.5ms); }
-@keyframes pk-trail { from { opacity: 1; } to { opacity: .12; } }
-
-/* ---- how the pins spin while waiting ---- */
-
-/* each pin brightens and ticks outward as the light reaches it */
-.passkey[data-spin="wave"] .pk-spoke { animation: pk-wave .9s ease-in-out infinite;
+.passkey[data-phase="clearing"] .pk-spoke { animation: pk-wave .9s ease-in-out infinite;
   animation-delay: calc((var(--i) - 7) * 112.5ms); }
 @keyframes pk-wave {
   0%        { transform: rotate(calc(var(--a) * 1deg)) translate(0, -12px); opacity: 1; }
@@ -81,12 +75,8 @@
     1000ms  DROP     both travel down together over 280ms into the cells' place
    The phase driver in PasskeyField holds the two hand-off points: done at 360, settled
    at 1000. Everything else is offset from those. */
-.passkey[data-mark="v2"][data-state="verifying"] .pk-spoke {
-  animation: pk-wave .9s ease-in-out infinite;
-  animation-delay: calc((var(--i) - 7) * 112.5ms); }
-
 /* GATHER — the cells and the arrow go together, over 160ms */
-.passkey[data-mark="v2"][data-phase] .pk-strip {
+.passkey[data-phase] .pk-strip {
   animation: pk-v2-cells-out 160ms var(--ease-out) forwards; pointer-events: none; }
 @keyframes pk-v2-cells-out { from { opacity: 1; } to { opacity: 0; } }
 
@@ -94,7 +84,7 @@
    --ease-in-out: both are symmetric, but the gentler curve keeps the convergence smooth
    where the stronger one snaps shut at the end. Full opacity throughout, so the wave's
    staggered dimming lifts as they draw together. */
-.passkey[data-mark="v2"][data-phase] .pk-spoke {
+.passkey[data-phase] .pk-spoke {
   animation: pk-v2-gather 280ms var(--ease-glide) forwards; }
 /* deliberately no opacity here. The animation fills forwards, and a filling animation
    outranks a declaration — naming opacity would pin it at 1 and leave the merged dot
@@ -111,13 +101,13 @@
 
 /* EXPAND — the dot the spokes made is handed to the square in one frame, at the same
    size, so it reads as that dot opening rather than a new shape arriving */
-.passkey[data-mark="v2"] .pk-check { opacity: 1; filter: none; }
-.passkey[data-mark="v2"] .pk-check-wall { opacity: 0; scale: .12; }
-.passkey[data-mark="v2"][data-phase="done"] .pk-spoke,
-.passkey[data-mark="v2"][data-phase="settled"] .pk-spoke { opacity: 0;
+.passkey .pk-check { opacity: 1; filter: none; }
+.passkey .pk-check-wall { opacity: 0; scale: .12; }
+.passkey[data-phase="done"] .pk-spoke,
+.passkey[data-phase="settled"] .pk-spoke { opacity: 0;
   transition: opacity 1ms; }
-.passkey[data-mark="v2"][data-phase="done"] .pk-check-wall,
-.passkey[data-mark="v2"][data-phase="settled"] .pk-check-wall { opacity: 1; scale: 1;
+.passkey[data-phase="done"] .pk-check-wall,
+.passkey[data-phase="settled"] .pk-check-wall { opacity: 1; scale: 1;
   transition: scale 160ms var(--ease-out), opacity 1ms; }
 /* TICK — the ink travels along the stroke: the dash is pulled back to nothing and let
    out again, so the line grows from its upper-right tip, down the long stroke to the bend
@@ -128,9 +118,9 @@
    linear, not --ease-out: a stroke being traced is a pen at a steady speed, and
    --ease-out put 84% of it in the first 60ms. The label keeps its ease-out; the two
    share a window, not a curve. */
-.passkey[data-mark="v2"] .pk-check-tick { clip-path: none; stroke-dashoffset: 1; }
-.passkey[data-mark="v2"][data-phase="done"] .pk-check-tick,
-.passkey[data-mark="v2"][data-phase="settled"] .pk-check-tick {
+.passkey .pk-check-tick { clip-path: none; stroke-dashoffset: 1; }
+.passkey[data-phase="done"] .pk-check-tick,
+.passkey[data-phase="settled"] .pk-check-tick {
   stroke-dashoffset: 0;                        /* the base rule only covers data-phase="done" */
   transition: stroke-dashoffset 200ms linear 160ms; }
 
@@ -138,16 +128,16 @@
    moves up out as the incoming one moves up in. It takes the tick's window exactly — the
    same 160ms delay, the same 200ms — so the mark is drawn over the course of the line
    changing, the two starting and finishing on the same frames. */
-.passkey[data-mark="v2"] .pk-status-text {
+.passkey .pk-status-text {
   animation: pk-v2-label-in 200ms var(--ease-out) 160ms both; }
-.passkey[data-mark="v2"] .pk-status-text[data-leaving] {
+.passkey .pk-status-text[data-leaving] {
   animation: pk-v2-label-out 200ms var(--ease-out) 160ms both; }
 @keyframes pk-v2-label-in  { from { opacity: 0; translate: 0 8px; }  to { opacity: 1; translate: 0 0; } }
 @keyframes pk-v2-label-out { from { opacity: 1; translate: 0 0; }   to { opacity: 0; translate: 0 -8px; } }
 
 /* DROP — icon and text as one row, down to where the cells were. 96px is measured off the
    layout: half the status row (16) + the column gap (16) + half the strip (64). */
-.passkey[data-mark="v2"][data-phase="settled"] .pk-status { translate: 0 96px;
+.passkey[data-phase="settled"] .pk-status { translate: 0 96px;
   transition: translate 280ms var(--ease-in-out); }
 
 /* The failure line, under the strip and behind a circled mark. Centred on the strip, as

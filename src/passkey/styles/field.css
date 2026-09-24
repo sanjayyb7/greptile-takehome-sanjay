@@ -3,9 +3,7 @@
 /* ---------- Passcode field ---------- */
 /* Every token the field uses is declared on the field, not on :root. A component that
    writes to the document's scope is one you cannot drop into an app without checking what
-   else answers to these names. The curves sit here rather than a line down with the
-   colours only because they are read by the switcher's stylesheet too — which declares
-   its own copy, for the same reason. */
+   else answers to these names. */
 .passkey {
   --pk-focus: #107a4d;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -19,23 +17,12 @@
 .passkey { display: flex; flex-direction: column; align-items: center; gap: 16px;
   width: calc(var(--pk-cell-w) * var(--pk-length, 4));
   --pk-face: #fafafa; --pk-line: #e4e4e4; --pk-ink: #323232; --pk-bad: #b3261e;
-  /* digit motion — distance, duration and curve in one place. The rise starts far enough
-     below that the glyph is fully outside the cell at 0%, so it travels up through the
-     bottom edge rather than fading in near the middle. */
-  --pk-rise: 24px;              /* versions 1 and 2: how far the digit travels in */
   /* locked to --pk-caret-ms: the digit is revealed by the block's passing, so the two
      have to share a midpoint. It is only a fallback — the entrance and exit each take the
      duration of the actual crossing, which is paced. */
   --pk-digit-ms: 300ms; --pk-digit-ease: var(--ease-out);
-  /* The shove that opens the gap. Bounce is Apple's parameter, not a damping ratio: 0
-     stops dead on its place, 0.8 swings well past it. Worth knowing that the push only
-     travels the width of the gap, so the overshoot is a fraction of 16px — 0.34 buys 1px
-     of it, which is why the default is higher than it would be over a longer distance.
-     Both are on the dial. */
-  --pk-push-bounce: 0; --pk-push-ms: 220ms;
   /* 0: the block leaving the last cell is what shoves the box, and the arrow turns up
      once it has settled. 1: the box waits for the arrow and is shoved by that instead. */
-  --pk-arrow-push: 0;
   --pk-cell-w: 84px; --pk-send-gap: 16px; --pk-caret-ms: 300ms; --pk-digit-blur: 4px;
   /* the authenticated mark and its label resolve the same way the digits do */
   --pk-mark-blur: 8px; --pk-label-blur: 6px; }

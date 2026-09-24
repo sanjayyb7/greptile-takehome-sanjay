@@ -206,7 +206,7 @@ function Digit(
  * mid-journey would hide the very motion it's meant to show.
  *
  * In the kept version it deliberately never travels: the wipe below is what reads as the
- * movement. The earlier explorations move it instead, and the smear needs to know when a
+ * movement. It does not travel — the block does that — so it needs to know when a
  * journey is under way, which is what data-moving marks.
  */
 function Caret({ index, hidden }: { index: number; hidden: boolean }) {
