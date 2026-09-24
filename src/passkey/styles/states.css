@@ -1,0 +1,107 @@
+/* Focused, verifying, refused — and all of it under reduced motion */
+
+.pk-slot:focus-within { z-index: 1; }
+/* ...and not once the send box is up: the code is complete and the next thing to press
+   is the arrow, so a cell still ringed as selected points at the wrong place. The input
+   keeps DOM focus — backspace and Enter must still land — it just stops saying so. */
+.passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-cell:focus {
+  border: 3px solid var(--pk-focus); border-radius: 4px;
+  box-shadow: 0 -4px 4px rgb(0 0 0 / 0.25); }
+/* The shadow is thrown UPWARD — the design has it above the cell, not below. Light from
+   under the strip, so the selected cell reads as tipped toward you rather than resting on
+   the page. It is left unclipped on purpose: the strip does not cut it off, so it falls
+   past the strip's rounded edge and the cell floats above the whole row, not just its
+   neighbours. Everything else is the design's own: 3px 107A4D, radius 4, black at 25%,
+   blur 4, no spread. */
+/* the end cells keep the strip's own 16px corner, so the ring never squares off an end */
+.passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot[data-edge="first"] .pk-cell:focus {
+  border-radius: 16px 4px 4px 16px; }
+.passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot[data-edge="last"] .pk-cell:focus {
+  border-radius: 4px 16px 16px 4px; }
+
+/* settled states: the strip dims and hands attention to the status line */
+.passkey[data-state="verifying"] .pk-cell,
+.passkey[data-state="success"] .pk-cell { background: #f3f2f2; }
+.passkey[data-state="verifying"] .pk-digit,
+.passkey[data-state="success"] .pk-digit { color: #858585; }
+
+
+/* wrong code: the whole strip reads as rejected, then clears itself */
+.passkey[data-state="error"] .pk-cell { border-color: var(--pk-bad); caret-color: var(--pk-bad); }
+/* ...but not where we draw our own. The native caret is shown in red here because, in the
+   versions that hide theirs on a filled cell, it is the only pointer left once a complete
+   code is refused. Where there is an edit caret it is a second one, and two pointers in a
+   cell is one more than the cell has meanings. */
+.passkey[data-editcaret][data-state="error"] .pk-cell { caret-color: transparent; }
+.passkey[data-state="error"] .pk-digit { color: var(--pk-bad); }
+.passkey[data-state="error"] .pk-cell:focus { border-color: var(--pk-bad); box-shadow: none; }
+
+/* The colour arrives on the same frame as the movement.
+
+   .pk-cell transitions border-color over 150ms, which is right for the focus ring and
+   wrong for this: measured, the red took 184ms to arrive and was still fading 124ms after
+   the shake had stopped, so the one event this was built to be came apart into a shake,
+   then a red, then a red sitting on a strip that had gone still. Dropped for the error
+   state alone — the ring keeps its own timing everywhere else. */
+.passkey[data-flashes][data-state="error"] .pk-cell { transition: background-color .2s ease; }
+
+/* The rejection as a moment rather than a state.
+
+   While it flashes, every cell is red — the selected one included. A green ring inside a
+   red strip says two things at once, and the one it says loudest is the wrong one.
+   The selection is still shown, in the same shape; only the colour changes. */
+.passkey[data-flashes][data-flash]:not([data-busy]) .pk-strip .pk-cell:focus {
+  border: 3px solid var(--pk-bad); border-radius: 4px; box-shadow: none; }
+
+/* And once it is over the field is itself again, with the last cell selected and ready.
+   The line underneath still says what happened; it does not need the strip to repeat it. */
+.passkey[data-flashes][data-state="error"]:not([data-flash]) .pk-cell {
+  border-color: var(--pk-line); caret-color: transparent; }
+.passkey[data-flashes][data-state="error"]:not([data-flash]) .pk-digit { color: var(--pk-ink); }
+
+/* the rejection shake is run from PasskeyCells via WAAPI — see the note there */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Full selectors — `.pk-spoke` alone is (0,1,0) and never beat the (0,3,0) rules above,
+     so the old override here was inert. The mark-scoped verifying rules are (0,4,0) and
+     were still beating this one, which left the spinner running at full speed with its
+     2px of travel for the whole wait; they are named here too.
+     The spokes keep pulsing — the wait still has to read as a wait — but the pulse is
+     opacity alone, pinned at the resting radius, so nothing moves. The per-spoke delay
+     survives, so the light still travels round the ring. */
+  .passkey[data-state="verifying"] .pk-spoke,
+  .passkey[data-mark="v1"][data-state="verifying"] .pk-spoke,
+  .passkey[data-mark="v2"][data-state="verifying"] .pk-spoke,
+  .passkey[data-phase="clearing"] .pk-spoke,
+  .passkey[data-phase="collapsing"] .pk-spoke {
+    animation-name: pk-spoke-pulse; animation-duration: 1.8s; }
+  @keyframes pk-spoke-pulse {
+    0%, 100% { transform: rotate(calc(var(--a) * 1deg)) translate(0, -10px); opacity: 1; }
+    50%      { transform: rotate(calc(var(--a) * 1deg)) translate(0, -10px); opacity: .22; }
+  }
+  /* the success sequence keeps its states, loses its travel */
+  .passkey[data-phase="done"] .pk-spoke { animation: none; opacity: 0; }
+  .passkey[data-phase="clearing"] .pk-strip { animation: none; opacity: 0; }
+  .pk-cell, .pk-digit { transition: none; }
+  .pk-digit { animation: none; }        /* digits appear immediately */
+  .pk-digit-out { display: none; }      /* and clear immediately, no lingering ghost */
+  /* the caret keeps blinking — it signals where typing lands — but stops travelling */
+  .pk-caret-wipe { display: none; }
+  .passkey[data-mark="v1"][data-phase="settled"] .pk-status,
+  .passkey[data-mark="v2"][data-phase="settled"] .pk-status { transition: none; translate: 0 96px; }
+  /* the sequenced hand-offs animate the spokes with their own keyframes, which outrank
+     the general rule below on specificity */
+  .passkey[data-mark="v1"][data-phase] .pk-spoke,
+  .passkey[data-mark="v2"][data-phase] .pk-spoke { animation: none; opacity: 0; }
+  .passkey[data-mark="v2"][data-phase] .pk-strip { animation: none; opacity: 0; }
+  .pk-problem, .pk-status-text, .pk-send, .pk-send svg { animation: none; }
+  /* the box opens and closes from JS, which skips it entirely under reduced motion —
+     so the closed state it starts from has to be undone here or it never shows */
+  .pk-send { scale: 1 1; }
+  .pk-resend[data-swap] { animation: none; }
+  .pk-resend button { animation: none; }   /* the colour stays — it carries the affordance */
+  .pk-spoke, .pk-check-wall, .pk-check-tick, .pk-check, .pk-spinner { transition: none; }
+  .passkey[data-mark="v2"] .pk-check-tick { stroke-dashoffset: 0; }
+  .pk-check { filter: none; }
+  .pk-check-tick { clip-path: inset(6.5px 4.5px 5.5px 4.5px); }
+}

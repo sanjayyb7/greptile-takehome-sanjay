@@ -1,0 +1,14 @@
+node_modules
+dist
+.DS_Store
+*.local
+
+# agent tooling, not part of the deliverable
+.agents/
+.claude/
+skills-lock.json
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/

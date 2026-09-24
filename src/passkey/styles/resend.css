@@ -1,0 +1,28 @@
+/* The resend line */
+
+.pk-resend { align-self: flex-start; margin: 6px 0 0; color: #858585;
+  font-family: "Inter", system-ui, sans-serif; font-size: 15px; line-height: 20px; }
+.pk-resend button { padding: 0; border: 0; background: none; font: inherit; cursor: pointer;
+  color: var(--pk-focus); text-decoration: underline; text-underline-offset: 3px;
+  transition: opacity .15s ease; }
+@media (hover: hover) and (pointer: fine) {
+  .pk-resend button:hover { opacity: .75; }
+}
+.pk-resend button:active { opacity: .6; }
+/* A counter has to sit in a box that does not depend on what it says. Zero-padding keeps
+   the character count fixed, tabular figures keep every digit the width of a zero, and
+   between them 30 -> 09 changes the glyphs and nothing else. */
+.pk-count { font-variant-numeric: tabular-nums; }
+.pk-resend button:focus-visible { outline: 2px solid var(--pk-focus); outline-offset: 3px; border-radius: 2px; }
+/* 009 — a change of state animates; the once-a-second countdown does not */
+.pk-resend[data-swap] { animation: pk-resend-in 200ms var(--ease-out) both; }
+@keyframes pk-resend-in { from { opacity: 0; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }
+/* 012 — the link only exists once the cooldown ends, so this fires exactly at the moment
+   it becomes pressable, and never on a tick */
+.pk-resend button { animation: pk-resend-live 260ms var(--ease-out) both; }
+@keyframes pk-resend-live {
+  from { opacity: 0; color: #858585; }
+  to   { opacity: 1; color: var(--pk-focus); }
+}
+
+/* the strip — one slot per cell; the input carries the box, a layer above carries the glyph */

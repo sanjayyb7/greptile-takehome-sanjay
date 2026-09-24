@@ -1,0 +1,17 @@
+/* The field's styles, in the order they have to cascade in.
+ *
+ * This was one file of a thousand lines. Split, each part is the size of the thing it
+ * describes and sits next to the component that renders it — but CSS is order-dependent,
+ * so the split is strictly by adjacent range and this list is the original order. Moving
+ * a line here moves it in the cascade; that is the one thing to be careful of.
+ *
+ * Imported once, by PasskeyField. Nothing else needs to. */
+
+@import "./styles/field.css";
+@import "./styles/status.css";
+@import "./styles/send.css";
+@import "./styles/resend.css";
+@import "./styles/strip.css";
+@import "./styles/states.css";
+@import "./styles/fluid.css";
+@import "./styles/dialog.css";

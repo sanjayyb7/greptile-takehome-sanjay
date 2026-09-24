@@ -1,0 +1,196 @@
+/* The strip: cells, caret, digit */
+
+.pk-strip { position: relative; display: flex; align-items: center; }
+.pk-slot { position: relative; width: var(--pk-cell-w); height: 128px; flex: none; display: block;
+  font-family: "Inter", system-ui, sans-serif; font-size: 36px; font-weight: 500; line-height: 44px; }
+.pk-cell { position: absolute; inset: 0; width: 100%; height: 100%; box-sizing: border-box; padding: 0;
+  background: var(--pk-face); border: 1px solid var(--pk-line);
+  font: inherit; text-align: center; color: transparent; caret-color: transparent; outline: none;
+  transition: background-color .2s ease, border-color .15s ease; }
+.pk-cell::selection { background: transparent; }
+.pk-slot + .pk-slot .pk-cell { border-left: none; }
+/* keyed off an explicit edge marker, not :first-child/:last-child — the caret is also a
+   child of the strip, so DOM position stopped identifying the end cells */
+.pk-slot[data-edge="first"] .pk-cell { border-radius: 16px 0 0 16px; }
+.pk-slot[data-edge="last"] .pk-cell { border-radius: 0 16px 16px 0; }
+
+/* glyph layer: clipped to the cell, so the entrance can't spill — the ring and shadow
+   live on the input beside it and stay unclipped */
+/* inset by the border width so the glyph is cut at the INNER edge — it disappears behind
+   the line rather than being drawn across it. Insetting evenly keeps the glyph centred. */
+.pk-clip { position: absolute; inset: 1px; overflow: hidden; pointer-events: none;
+  display: grid; place-items: center; }
+.passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within .pk-clip { inset: 3px; }
+.pk-clip > * { grid-area: 1 / 1; }   /* digit and caret stack, never two rows */
+
+/* Seamless: no horizontal clipping between cells, so a block crossing a divider does not
+   break in half over it. Measured, the band nothing could paint in ran 266.5 to 270.5 —
+   1px of divider and 3px of the entered cell's focus inset. The outer two edges keep
+   theirs: past them is the strip's own rounded border and there is nothing beyond it for
+   a block to be continuous with. */
+.passkey[data-seamless] .pk-clip { left: 0; right: 0; }
+/* the focused cell's rule is `inset`, which sets all four sides, so the horizontal two
+   have to be taken back at a specificity that beats it */
+.passkey[data-seamless]:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within .pk-clip {
+  left: 0; right: 0; }
+.passkey[data-seamless] .pk-slot[data-edge="first"] .pk-clip { left: 1px; }
+.passkey[data-seamless] .pk-slot[data-edge="last"] .pk-clip { right: 1px; }
+.passkey[data-seamless]:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within[data-edge="first"] .pk-clip { left: 3px; }
+.passkey[data-seamless]:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within[data-edge="last"] .pk-clip { right: 3px; }
+
+/* The field holds the height of its tallest state, so a rejection cannot move the cells.
+
+   The failure line is 22px with a 16px gap above it, and the field is centred in the
+   viewport — so adding it lifted the strip by half of that, 19px, at the exact moment the
+   code you are about to retype should be the one thing you can rely on to stay still.
+
+   Summed rather than measured, so it can be read: the status row, the strip, the failure
+   line, the resend line and its 6px offset, and the three gaps between the four of them.
+   The message now appears in space that was already reserved, and only the resend line
+   below it moves.
+
+   It is a variable rather than a literal because the harness needs the same number: the
+   switcher would otherwise centre a 218px field and a 256px one in the same row, which
+   moved the strip 19px every time you changed version. */
+.passkey { --pk-tallest: calc(32px + 128px + 22px + 20px + 6px + 3 * 16px); }
+.passkey[data-steady] { min-height: var(--pk-tallest); }
+
+/* The block is placed from the clip's own inset rather than from a constant that assumed
+   one. The -2px was derived when every cell clipped 1px inside its border; seamless cells
+   clip at the border itself, so the window sat 1px left of centre — and only in the middle
+   two, since the first cell keeps its inset. Measured 1.00px off on the middle cells and
+   0.00 with this. Not a preference: a block that lines up in two cells out of four is
+   wrong in the two it misses. */
+.pk-clip { --pk-clip-x: 1px; }
+.passkey[data-seamless] .pk-clip { --pk-clip-x: 0px; }
+.passkey[data-seamless] .pk-slot[data-edge="first"] .pk-clip { --pk-clip-x: 1px; }
+.passkey[data-seamless]:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within[data-edge="first"] .pk-clip {
+  --pk-clip-x: 3px; }
+
+/* our own caret: the native one blinks at the OS rate and sits beside filled digits.
+   It sits on the strip, not in a cell, so it can travel across the dividers. */
+.pk-caret { position: absolute; top: 50%; left: 0; z-index: 2; pointer-events: none;
+  width: 2px; height: 44px; margin-top: -22px; border-radius: 1px; background: var(--pk-focus);
+  translate: calc(var(--pk-caret-i) * var(--pk-cell-w) + var(--pk-cell-w) / 2 - 1px) 0;
+  animation: pk-blink 1s steps(1, end) infinite; }
+/* deliberately no transition on translate: the caret is simply at the new cell. What reads
+   as movement is .pk-caret-wipe below, and interpolating both would read as two carets. */
+.pk-caret[data-still] { animation: none; opacity: 1; }      /* solid while the wipe crosses */
+.pk-caret[data-hidden] { animation: none; opacity: 0; }     /* the cell it landed on is filled */
+/* ...unless the version keeps one for editing, in which case it is moved rather than
+   hidden: past the digit, where the next keystroke acts, instead of through the middle of
+   it. 14px is half the widest digit's 22.68 plus a hair — measured, not guessed. The
+   digits are tabular here so every one of them is that width and the gap never changes.
+
+   Not while the send box is up, though — the same condition the focus ring is under, and
+   for the same reason. The code is complete and the next thing to press is the arrow, so
+   a cell still pointed at is pointing at the wrong place. */
+.passkey[data-editcaret] .pk-digit { font-variant-numeric: tabular-nums; }
+.passkey[data-editcaret] .pk-strip:not([data-parked]) .pk-caret[data-hidden] {
+  opacity: 1; margin-left: 14px; animation: pk-blink 1s steps(1, end) infinite; }
+
+/* The move itself: a window spanning the two caret positions, with a solid bar sliding
+   through it. The window clips, so the bar enters as a sliver at the cell being left,
+   grows to fill the whole span at the halfway point — bridging both positions — then
+   narrows to a sliver at the cell being entered. Breadth travels across; nothing scales,
+   so the edges stay as crisp as the caret itself.
+
+   It is drawn in halves, one inside each cell's .pk-clip, rather than as a single element
+   over the strip. The clip layer is inset by the border, so each half is cut at the inner
+   edge the way a digit is: the divider and the focus ring stay whole on top and the bar
+   travels under them. --pk-wipe-o is how many cells left of this one the window starts,
+   so both halves place the same window and the bar reads as one continuous object. */
+.pk-caret-wipe { position: absolute; top: 50%; pointer-events: none;
+  overflow: hidden;                                         /* the whole trick */
+  /* as wide as the journey, not as wide as a cell: the window runs from the centre of
+     the cell being left to the centre of the one being entered, so a click three cells
+     away is spanned by one block rather than by two halves with nothing between them.
+     The bar inside is the window's own width, which is what makes it reach both ends at
+     the halfway point — half of it in the cell it left, half in the cell it is entering. */
+  width: calc(var(--pk-wipe-span, 1) * var(--pk-cell-w) + 2px); height: 44px; margin-top: -22px;
+  /* The window is placed inside .pk-clip, so where the clip starts is part of the sum.
+     It used to be a flat -2px, which is right only while every cell clips 1px inside its
+     border — seamless cells clip at the border itself and the window sat a pixel left of
+     centre. Reading the inset is the same -2px wherever it was right before. */
+  left: calc(var(--pk-wipe-o) * var(--pk-cell-w) + var(--pk-cell-w) / 2
+             - 1px - var(--pk-clip-x, 1px)); }
+.pk-caret-wipe > i { display: block; width: 100%; height: 100%;
+  border-radius: 1px; background: var(--pk-focus);
+  /* --pk-wipe-ms is the time until the next move when that is sooner, so a held erase
+     plays a run of complete wipes rather than a run of interrupted ones */
+  animation: pk-caret-wipe var(--pk-wipe-ms, var(--pk-caret-ms)) ease-in-out
+              var(--pk-wipe-delay, 0ms) both; }
+.pk-caret-wipe[data-back] > i { animation-name: pk-caret-wipe-back; }
+/* Pasted, there is no caret in the last cell — the digits simply appeared — so a sliver
+   growing out of its centre lands on top of the digit and reads as a mark on it. The
+   block starts clear of the glyph instead and already travelling, and pushes out.
+   The window is 86px and the cell clips it at 43, so the visible run is its left half:
+   15% puts the block's leading edge just past the digit, 52% takes its trailing edge off
+   the cell's edge exactly as the animation ends. --ease-out, not ease-in-out: this one
+   is a departure, and should not begin by gathering pace it is meant to already have. */
+.pk-caret-wipe[data-push] > i {
+  animation-name: pk-caret-wipe-push; animation-timing-function: var(--ease-out); }
+@keyframes pk-caret-wipe-push {
+  from { translate: 15% 0; }
+  to   { translate: 52% 0; }
+}
+/* percentages of the window, so the shape holds at any cell width. 12.5% showing at the
+   start and 6.25% at the end are the slivers that stand in for the caret at either end. */
+@keyframes pk-caret-wipe {
+  from { translate: -87.5% 0; }
+  50%  { translate: 0 0; }
+  to   { translate: 93.75% 0; }
+}
+@keyframes pk-caret-wipe-back {
+  from { translate: 87.5% 0; }
+  50%  { translate: 0 0; }
+  to   { translate: -93.75% 0; }
+}
+@keyframes pk-blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+/* both the entrance and the exit are driven from PasskeyCells via WAAPI: they can be
+   interrupted, and each takes the length of the block crossing the cell, which is not a
+   number a stylesheet can know. See the notes there. */
+.pk-digit { color: var(--pk-ink); transition: color .2s ease; }
+/* the exit is the entrance in reverse and is run from PasskeyCells for the same reason:
+   it takes the length of the block that is crossing the cell, which is not a fixed number */
+
+/* ---------- The first versions: a letter resolving, and a caret that moves itself ----------
+
+   The values the fade was tuned at when it was the whole effect: a heavier blur over a
+   longer window than the block's crossing allows, because nothing else was carrying the
+   moment.
+   Their own names, not --pk-digit-*: the dev panel writes those inline on the field, and
+   inline beats a class rule, so these would have read 4px/300ms in the dev build and
+   10px/320ms in every other one. A variable nothing else writes says the same thing in
+   both. */
+.passkey[data-entrance="fade"] { --pk-fade-blur: 10px; --pk-fade-ms: 320ms; }
+/* The vanishing letters: the travel is the whole effect, so it is a long one. 92px starts
+   the glyph wholly below the cell, which is what makes it come up THROUGH the bottom edge
+   rather than fade in somewhere near the middle — and, going the other way, slide down
+   past that edge and be gone. Nothing fades and nothing scales; .pk-clip is what takes
+   it, so the cell's own edge does the vanishing. */
+.passkey[data-entrance="vanish"] { --pk-vanish-rise: 92px; --pk-vanish-ms: 320ms; }
+/* The caret's own explorations. "jump" needs no rule — the caret is declared without a
+   transition, because the kept version moves the block and not the bar. */
+/* slide: it travels on a transition, crossing the dividers on its way */
+.passkey[data-caret="slide"] .pk-caret {
+  transition: translate var(--pk-caret-ms) cubic-bezier(0.33, 1, 0.68, 1); }
+/* smear: the same travel, and it stretches into a block as it goes.
+   ease-in-out, not ease-out: it is moving point to point on screen rather than entering,
+   so it gathers pace and settles instead of bolting and coasting.
+   42 is the cell pitch over the caret's width (84 / 2): at the halfway point the block is
+   exactly one cell wide, so it spans the cell it left and the one it is entering — the
+   two positions are bridged rather than merely passed between. The peak is at 50% so the
+   widest moment lands with the caret midway, matching the travel's own curve. */
+.passkey[data-caret="smear"] .pk-caret {
+  transition: translate var(--pk-caret-ms) var(--ease-in-out); }
+.passkey[data-caret="smear"] .pk-caret[data-moving] { opacity: 1;
+  animation: pk-caret-smear var(--pk-caret-ms) var(--ease-in-out) both; }
+@keyframes pk-caret-smear {
+  0%   { scale: 1 1; }
+  50%  { scale: var(--pk-caret-stretch, 42) .9; }
+  100% { scale: 1 1; }
+}
+
+/* active slot lifts out of the strip — only while the field accepts input, so settled
+   states keep the strip's own corners instead of having the ring reset them */
