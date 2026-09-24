@@ -161,7 +161,7 @@ test.describe("regressions", () => {
     // `length` reached the state machine but the cells were handed a constant, so a
     // six-digit field ran a six-digit machine behind four boxes — and the field's width
     // was a flat 336px, which is four cells written out as a total
-    const f = await Field.open(page, "?v=8&len=6");
+    const f = await Field.open(page, "?len=6");
     await expect(f.cells).toHaveCount(6);
     const fits = await page.evaluate(() => {
       const field = document.querySelector(".passkey")!.getBoundingClientRect();
@@ -174,16 +174,4 @@ test.describe("regressions", () => {
     await expect(f.problem).toHaveText("Enter all 6 digits.");   // the copy counts too
   });
 
-  test("the strip sits at the same height in every version", async ({ page }) => {
-    // the versions are not all the same height, and the harness centred each at its own —
-    // so changing version moved the one thing the switcher exists to compare
-    const tops: number[] = [];
-    for (const v of [11, 13, 12, 1, 2, 4, 5, 8, 14, 17, 15]) {
-      await page.goto(`/?v=${v}`);
-      await page.waitForSelector(".pk-strip");
-      tops.push(await page.evaluate(() =>
-        Math.round(document.querySelector(".pk-strip")!.getBoundingClientRect().top)));
-    }
-    expect(new Set(tops).size, `strip tops: ${tops.join(", ")}`).toBe(1);
-  });
 });

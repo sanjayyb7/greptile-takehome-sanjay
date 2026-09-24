@@ -28,15 +28,15 @@
    1px of divider and 3px of the entered cell's focus inset. The outer two edges keep
    theirs: past them is the strip's own rounded border and there is nothing beyond it for
    a block to be continuous with. */
-.passkey[data-seamless] .pk-clip { left: 0; right: 0; }
+.passkey .pk-clip { left: 0; right: 0; }
 /* the focused cell's rule is `inset`, which sets all four sides, so the horizontal two
    have to be taken back at a specificity that beats it */
-.passkey[data-seamless]:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within .pk-clip {
+.passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within .pk-clip {
   left: 0; right: 0; }
-.passkey[data-seamless] .pk-slot[data-edge="first"] .pk-clip { left: 1px; }
-.passkey[data-seamless] .pk-slot[data-edge="last"] .pk-clip { right: 1px; }
-.passkey[data-seamless]:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within[data-edge="first"] .pk-clip { left: 3px; }
-.passkey[data-seamless]:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within[data-edge="last"] .pk-clip { right: 3px; }
+.passkey .pk-slot[data-edge="first"] .pk-clip { left: 1px; }
+.passkey .pk-slot[data-edge="last"] .pk-clip { right: 1px; }
+.passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within[data-edge="first"] .pk-clip { left: 3px; }
+.passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within[data-edge="last"] .pk-clip { right: 3px; }
 
 /* The field holds the height of its tallest state, so a rejection cannot move the cells.
 
@@ -53,7 +53,7 @@
    switcher would otherwise centre a 218px field and a 256px one in the same row, which
    moved the strip 19px every time you changed version. */
 .passkey { --pk-tallest: calc(32px + 128px + 22px + 20px + 6px + 3 * 16px); }
-.passkey[data-steady] { min-height: var(--pk-tallest); }
+.passkey { min-height: var(--pk-tallest); }
 
 /* The block is placed from the clip's own inset rather than from a constant that assumed
    one. The -2px was derived when every cell clipped 1px inside its border; seamless cells
@@ -62,9 +62,9 @@
    0.00 with this. Not a preference: a block that lines up in two cells out of four is
    wrong in the two it misses. */
 .pk-clip { --pk-clip-x: 1px; }
-.passkey[data-seamless] .pk-clip { --pk-clip-x: 0px; }
-.passkey[data-seamless] .pk-slot[data-edge="first"] .pk-clip { --pk-clip-x: 1px; }
-.passkey[data-seamless]:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within[data-edge="first"] .pk-clip {
+.passkey .pk-clip { --pk-clip-x: 0px; }
+.passkey .pk-slot[data-edge="first"] .pk-clip { --pk-clip-x: 1px; }
+.passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within[data-edge="first"] .pk-clip {
   --pk-clip-x: 3px; }
 
 /* our own caret: the native one blinks at the OS rate and sits beside filled digits.
@@ -85,8 +85,8 @@
    Not while the send box is up, though — the same condition the focus ring is under, and
    for the same reason. The code is complete and the next thing to press is the arrow, so
    a cell still pointed at is pointing at the wrong place. */
-.passkey[data-editcaret] .pk-digit { font-variant-numeric: tabular-nums; }
-.passkey[data-editcaret] .pk-strip:not([data-parked]) .pk-caret[data-hidden] {
+.passkey .pk-digit { font-variant-numeric: tabular-nums; }
+.passkey .pk-strip:not([data-parked]) .pk-caret[data-hidden] {
   opacity: 1; margin-left: 14px; animation: pk-blink 1s steps(1, end) infinite; }
 
 /* The move itself: a window spanning the two caret positions, with a solid bar sliding
@@ -154,27 +154,14 @@
 /* the exit is the entrance in reverse and is run from PasskeyCells for the same reason:
    it takes the length of the block that is crossing the cell, which is not a fixed number */
 
-/* ---------- The first versions: a letter resolving, and a caret that moves itself ----------
 
-   The values the fade was tuned at when it was the whole effect: a heavier blur over a
-   longer window than the block's crossing allows, because nothing else was carrying the
-   moment.
-   Their own names, not --pk-digit-*: the dev panel writes those inline on the field, and
-   inline beats a class rule, so these would have read 4px/300ms in the dev build and
-   10px/320ms in every other one. A variable nothing else writes says the same thing in
-   both. */
-.passkey[data-entrance="fade"] { --pk-fade-blur: 10px; --pk-fade-ms: 320ms; }
 /* The vanishing letters: the travel is the whole effect, so it is a long one. 92px starts
    the glyph wholly below the cell, which is what makes it come up THROUGH the bottom edge
    rather than fade in somewhere near the middle — and, going the other way, slide down
    past that edge and be gone. Nothing fades and nothing scales; .pk-clip is what takes
    it, so the cell's own edge does the vanishing. */
-.passkey[data-entrance="vanish"] { --pk-vanish-rise: 92px; --pk-vanish-ms: 320ms; }
 /* The caret's own explorations. "jump" needs no rule — the caret is declared without a
    transition, because the kept version moves the block and not the bar. */
-/* slide: it travels on a transition, crossing the dividers on its way */
-.passkey[data-caret="slide"] .pk-caret {
-  transition: translate var(--pk-caret-ms) cubic-bezier(0.33, 1, 0.68, 1); }
 /* smear: the same travel, and it stretches into a block as it goes.
    ease-in-out, not ease-out: it is moving point to point on screen rather than entering,
    so it gathers pace and settles instead of bolting and coasting.
@@ -182,10 +169,6 @@
    exactly one cell wide, so it spans the cell it left and the one it is entering — the
    two positions are bridged rather than merely passed between. The peak is at 50% so the
    widest moment lands with the caret midway, matching the travel's own curve. */
-.passkey[data-caret="smear"] .pk-caret {
-  transition: translate var(--pk-caret-ms) var(--ease-in-out); }
-.passkey[data-caret="smear"] .pk-caret[data-moving] { opacity: 1;
-  animation: pk-caret-smear var(--pk-caret-ms) var(--ease-in-out) both; }
 @keyframes pk-caret-smear {
   0%   { scale: 1 1; }
   50%  { scale: var(--pk-caret-stretch, 42) .9; }

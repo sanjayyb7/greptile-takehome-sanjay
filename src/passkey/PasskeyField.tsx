@@ -1,6 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { PasskeyCells } from "./PasskeyCells";
-import { FINAL, behaviourOf, type Behaviour, type Version } from "./variants";
 import { PasskeyResend } from "./PasskeyResend";
 import { StatusIcon } from "./StatusIcon";
 import { SHAKE_MS } from "./timing";
@@ -20,44 +19,29 @@ function progress(p: Passkey) {
   return "";
 }
 
-/** failures read underneath, aligned to the strip's left edge */
-function problem(p: Passkey, guarded: boolean, length: number) {
-  /* Guarded: every case gets its own sentence, because they ask for different things.
-     "Enter all N digits" is an instruction and the code is fine so far; "Incorrect code"
-     means retype it; "Couldn't verify" means the code was never judged and pressing again
-     is the right move. One message for all three would be wrong twice. */
-  if (guarded) {
-    if (p.problem === "incomplete") return `Enter all ${length} digits.`;
-    if (p.problem === "incorrect") return "Incorrect code. Try again.";
-    if (p.problem === "offline") return "Couldn't verify your code. Try again.";
-    return "";
-  }
-  // the design's wording. There is no attempt counter to report: a wrong code is refused
-  // and the field stays open, so the only thing to say is that this one was wrong.
-  if (p.status === "error") return "Invalid code. Please try again.";
+/**
+ * Failures read underneath the strip, and each case gets its own sentence.
+ *
+ * They ask for different things. "Enter all N digits" is an instruction and the code is
+ * fine so far; "Incorrect code" means retype it; "Couldn't verify" means the code was
+ * never judged and pressing again is the right move. One message for all three would be
+ * wrong twice.
+ */
+function problem(p: Passkey, length: number) {
+  if (p.problem === "incomplete") return `Enter all ${length} digits.`;
+  if (p.problem === "incorrect") return "Incorrect code. Try again.";
+  if (p.problem === "offline") return "Couldn't verify your code. Try again.";
   return "";
 }
 
 /** Passcode entry: four cells, a status line above, and the states in between */
 export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true,
-  version = FINAL, behaviour, length = LENGTH, onVerify, onResend, resendCooldown,
-  resendTo, onSuccess }: {
+  length = LENGTH, onVerify, onResend, resendCooldown, resendTo, onSuccess }: {
   autoFocus?: boolean;
   /** submit as soon as the last digit lands; off when the Send button is doing that job */
   autoSubmit?: boolean;
   /** offer a Send button once the code is complete */
   send?: boolean;
-  /**
-   * Which exploration to run — see variants.ts. This is the demo's switch, not part of
-   * using the field: left out, it runs the one that was chosen.
-   */
-  version?: Version;
-  /**
-   * How the field behaves, if not one of the explorations. `version` is a shorthand for
-   * picking one of these off the shelf; this is the shelf. Pass it and the version is
-   * ignored, which is how a field that is none of the ten gets described.
-   */
-  behaviour?: Behaviour;
   /** how many cells */
   length?: number;
   /** check the code — the stand-in answers to 1234 until something real is passed */
@@ -69,19 +53,17 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
   resendTo?: string;
   onSuccess?: (code: string) => void;
 }) {
-  const b = behaviour ?? behaviourOf(version);
   /* The goo filter is referenced from CSS, which cannot know a generated id — so the id is
      generated here and handed to CSS as a variable. Written out, two fields on a page
      would define #pk-goo twice and every filter in both of them would resolve to the
      first, which is the first field's coordinate space. */
   const gooId = useId();
   const passkey = usePasskey({
-    length, autoSubmit, stepsWhenHeld: b.stepsWhenHeld,
-    handsBackOnError: b.handsBackOnError,
+    length, autoSubmit, stepsWhenHeld: true, handsBackOnError: true,
     onVerify, onResend, resendCooldown, onSuccess,
   });
   const { status, shake, focusAt } = passkey;
-  const below = problem(passkey, b.guarded, length);
+  const below = problem(passkey, length);
   // success runs in two phases: the cells leave first, then the mark arrives
   const [phase, setPhase] = useState<"none" | "clearing" | "collapsing" | "done" | "settled">("none");
   const statusRef = useRef<HTMLParagraphElement>(null);
@@ -97,14 +79,13 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
      event, so they start and stop on the same frames rather than one outliving the other.
      Keyed on the shake counter as well as the status, so a second rejection of the same
      code — which never leaves the error state — flashes again instead of doing nothing. */
-  const flashes = b.flashesError;
   const [flash, setFlash] = useState(false);
   useEffect(() => {
-    if (!flashes || status !== "error") { setFlash(false); return; }
+    if (status !== "error") { setFlash(false); return; }
     setFlash(true);
     const id = window.setTimeout(() => setFlash(false), SHAKE_MS);
     return () => clearTimeout(id);
-  }, [flashes, shake, status]);
+  }, [shake, status]);
 
   /*
    * The shipped hand-off and spinner, written on the node rather than rendered.
@@ -118,15 +99,15 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
    *
    * Set here and not in JSX because the dev panel owns these attributes once it has
    * written to them; rendered, every phase change would snatch them back mid-sequence.
-   * Set on mount and only when absent, so switching version — which remounts the field
-   * and drops what the panel wrote to the old node — lands on the real behaviour again.
+   * Set on mount and only when absent, so anything that wrote to the node before us keeps
+   * what it wrote.
    */
   useLayoutEffect(() => {
     const el = rootRef.current;
     if (!el) return;
-    el.dataset.mark ||= b.handOff;
+    el.dataset.mark ||= "v2";
     el.dataset.spin ||= "wave";
-  }, [version]);
+  }, []);
 
   useEffect(() => {
     if (status !== "success") return;
@@ -215,21 +196,12 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
        was a flat 336px, which is four cells, and a six-digit field laid its strip outside
        the box that is supposed to contain it. */
     <div className="passkey" ref={rootRef} style={{ "--pk-length": length, "--pk-goo": `url(#${gooId})` } as CSSProperties}
-      data-state={status} data-version={version}
-      data-attached={b.hasSend && !b.detachedSend ? "" : undefined}
-      data-entrance={b.entrance}
-      data-caret={b.caret}
-      data-filled={b.filledMark ? "" : undefined}
-      data-seamless={b.seamlessWipe ? "" : undefined}
-      data-steady={b.steadyHeight ? "" : undefined}
-      data-editcaret={b.editCaret ? "" : undefined}
-      data-guarded={b.guarded ? "" : undefined}
-      data-flashes={flashes ? "" : undefined}
+      data-state={status}
       data-flash={flash ? "" : undefined}
       data-phase={phase === "none" ? undefined : phase}
       data-shake={shake} data-busy={passkey.busy || undefined}>
       {/*
-        * The goo filter, for the fluid version. Blur everything in the group, then throw
+        * The goo filter. Blur everything in the group, then throw
         * the alpha channel's contrast far enough that the blur's soft edge snaps back to
         * a hard one: shapes further apart than the blur stay separate, shapes closer than
         * it merge, and shapes in between are joined by a neck. Nothing draws the neck —
@@ -251,8 +223,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
       <p className="pk-status" ref={statusRef} role="status" aria-live="polite">
         {above && (
           <>
-            <StatusIcon status={status} origin={b.handOff === "origin"}
-              filled={b.filledMark} />
+            <StatusIcon status={status} />
             <span className="pk-status-label">
               {/* holds the lane open at the width of the longest line from the start, so
                   the icon beside it never shifts sideways when the text changes */}
@@ -275,18 +246,6 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
           passkey={passkey}
           length={length}
           send={send}
-          written={b.entrance === "written"}
-          fadeIn={b.entrance === "fade"}
-          vanish={b.entrance === "vanish"}
-          caret={b.caret}
-          noCaret={b.hidesCaret}
-          handsBack={b.handsBackOnError}
-          staleOnResend={b.guarded}
-          falls={b.boxFallsIn}
-          fluid={b.fluidSend}
-          fluidBlock={b.fluidDigits}
-          smooth={b.smoothSend}
-          clears={b.sendClearsOnSubmit}
         />
       )}
       {/* keyed on the shake counter so the copy re-enters on every rejection, even when
@@ -301,7 +260,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
           {below}
         </p>
       )}
-      <PasskeyResend passkey={passkey} guarded={b.guarded} to={resendTo} />
+      <PasskeyResend passkey={passkey} to={resendTo} />
     </div>
   );
 }

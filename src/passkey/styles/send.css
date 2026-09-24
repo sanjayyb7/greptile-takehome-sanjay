@@ -8,22 +8,6 @@
    A container of its own, set apart by --pk-send-gap and carrying its own four corners:
    it is a second object beside the field, not the field's last cell. It still opens out
    of the strip's edge, so what it is doing is pushing clear rather than appearing. */
-/* Attached — the box is the end of the strip rather than a thing beside it: flush against
-   the last cell, square where they meet, and the cell hands its corner over.
-   Keyed on data-attached, not on a version number: two versions arrange the box this way
-   and a third would have meant a third copy of every rule below. */
-.passkey[data-attached] .pk-send { left: 100%; border-radius: 0 16px 16px 0; }
-.passkey[data-attached] .pk-strip[data-send="on"] .pk-slot[data-edge="last"] .pk-cell,
-.passkey[data-attached]:not([data-busy]) .pk-strip[data-send="on"] .pk-slot[data-edge="last"] .pk-cell:focus {
-  border-radius: 0; }
-/* and the last cell keeps saying it is selected, since the box is part of the same object */
-.passkey[data-attached]:not([data-busy]) .pk-strip[data-send="on"] .pk-cell:focus {
-  border: 3px solid var(--pk-focus); border-radius: 4px;
-  box-shadow: 0 -4px 4px rgb(0 0 0 / 0.25); }
-.passkey[data-attached]:not([data-busy]) .pk-strip[data-send="on"] .pk-slot[data-edge="first"] .pk-cell:focus {
-  border-radius: 16px 4px 4px 16px; }
-.passkey[data-attached]:not([data-busy]) .pk-strip[data-send="on"] .pk-slot:focus-within .pk-clip {
-  inset: 3px; }
 .pk-send { position: absolute; left: calc(100% + var(--pk-send-gap)); top: 0;
   width: var(--pk-cell-w); height: 128px; padding: 0; border: 0;
   background: var(--pk-focus); color: #fff; border-radius: 16px; cursor: pointer;
@@ -51,7 +35,6 @@
 /* Version 4 — it arrives attached to the strip and is shoved clear, so the gap between
    them is made by the push rather than being there from the start. It begins a whole
    gap's width further left than it ends up. The arrow waits for it to settle. */
-.passkey[data-version="4"] .pk-send { scale: 0 1; translate: calc(-1 * var(--pk-send-gap)) 0; }
 /* the wait is read from the variable wherever one is set, rather than from a list of
    versions that has to be remembered — the list was already one version out of date */
 /* out before the box moves, back the way it came in */
@@ -63,8 +46,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   /* JS skips the drop, so the box has to be told it has already landed */
-  .passkey[data-version="4"] .pk-send { scale: 1 1; translate: 0 0; opacity: 1; }
-}
+  }
 @keyframes pk-send-arrow { from { opacity: 0; translate: -8px 0; } to { opacity: 1; translate: 0 0; } }
 /* counter-scales the arrow so the box's horizontal squeeze never reaches it */
 /* gated: a tap on a touch screen fires a hover that then sticks, leaving the box looking

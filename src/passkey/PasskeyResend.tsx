@@ -18,66 +18,16 @@ const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2,
  * shown rather than held back, because the question after a code is sent is when the next
  * one can be had — being told only on asking means asking to find out.
  */
-export function PasskeyResend({ passkey, guarded = false, to }: {
+export function PasskeyResend({ passkey, to = "you@example.com" }: {
   passkey: Passkey;
-  /** ask before spending a code, and name where it is going — see variants.ts */
-  guarded?: boolean;
   /** where a new code would go; only shown in the confirmation */
   to?: string;
 }) {
-  if (guarded) return <GuardedResend passkey={passkey} to={to ?? "you@example.com"} />;
-  return <PlainResend passkey={passkey} />;
-}
-
-function PlainResend({ passkey }: { passkey: Passkey }) {
-  const { cooldown, resending, resend, status } = passkey;
-  // While the code is being checked there is nothing to offer, but the line keeps its
-  // space: dropping it at submit shifted the whole field down by its height plus the
-  // column gap, which both jolted the strip as it was pressed and moved the target the
-  // success mark travels down to. The space is held, so nothing moves but the sequence.
-  if (status === "verifying" || status === "success") {
-    return <p className="pk-resend" aria-hidden="true">&nbsp;</p>;
-  }
-
-  // data-swap marks a change of state, which animates. The countdown deliberately carries
-  // neither it nor a key: it changes every second, and motion on that cadence is noise.
-  if (resending === "sending") {
-    return <p className="pk-resend" key="sending" data-swap role="status">Sending a new code…</p>;
-  }
-  if (resending === "sent") {
-    return <p className="pk-resend" key="sent" data-swap role="status">New code sent</p>;
-  }
-  // The wait, once a code has actually gone. It follows the "sent" beat rather than
-  // waiting to be asked for: a timer is only a penalty when it arrives unexplained, and
-  // after "New code sent" it is the answer to the obvious next question.
-  //
-  // It is keyed so it mounts once and animates in once. The seconds then change inside an
-  // element that stays put, which is the point — the entrance is a change of state and
-  // worth marking; a tick every second is not, and animating it would be noise.
-  if (cooldown > 0) {
-    return (
-      <p className="pk-resend" key="waiting" data-swap role="status">
-        {/* Two digits, always, and tabular figures so every digit is the width of a
-            zero. Between them the line cannot reflow: padding keeps the character count
-            fixed where 10 -> 9 would have dropped one, and tabular keeps 1 from being
-            narrower than 8. It also closes the gap that right-aligning a single digit in
-            a two-digit box left after "Wait". */}
-        Resend code again in{" "}
-        <span className="pk-count">{String(cooldown).padStart(2, "0")}</span>s
-      </p>
-    );
-  }
-
-  return (
-    <p className="pk-resend" key="idle" data-swap>
-      Didn't get a code?{" "}
-      <button type="button" onClick={resend}>Resend</button>
-    </p>
-  );
+  return <GuardedResend passkey={passkey} to={to} />;
 }
 
 /**
- * The same line, made to confirm first and to name every state it passes through.
+ * The line under the strip: the offer, and every state it passes through.
  *
  * At rest it is worded as the offer is worded everywhere else — "Didn't get a code?
  * Resend" — because that is the question the person is actually asking, and the version

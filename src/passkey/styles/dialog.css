@@ -80,5 +80,5 @@
    either way, tabular — so it counts down without either edge moving. Written in seconds
    it would have walked both edges once a second, which is why the other versions' line
    stays left. */
-.passkey[data-guarded] .pk-problem { align-self: center; justify-content: center; text-align: center; }
-.passkey[data-guarded] .pk-resend { align-self: center; text-align: center; }
+.passkey .pk-problem { align-self: center; justify-content: center; text-align: center; }
+.passkey .pk-resend { align-self: center; text-align: center; }

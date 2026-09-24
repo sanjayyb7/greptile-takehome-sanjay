@@ -34,7 +34,7 @@ npm test
 
 Twenty-four tests in a real browser, in three files:
 
-- **`tests/rules.spec.ts`** — the brief's rules, one test each, against the chosen version.
+- **`tests/rules.spec.ts`** — the brief's rules, one test each.
   Digits only, paste filtered, focus advancing, both Backspace behaviours, hold-to-clear,
   Enter submitting, and the delay actually being a couple of seconds.
 - **`tests/cases.spec.ts`** — the ten cases, in the order they are written down.
@@ -80,23 +80,22 @@ confirming it fails.
 - **`?len=6`** — builds the field at another length. The design is drawn for four, so four
   is what it opens at; this is here because "it is a component, not a demo" is a claim, and
   a claim you cannot try is a sentence in a README
-- **`?v=8`** — opens on a particular version; see below
 
 ## Structure
 
-Everything here is the passcode field and the things needed to run it, try it or test it —
-39 files, and nothing that is not one of those four. No leftover experiments, no scratch
-branches folded in, no notes from getting here.
+One version of the field and nothing else: the ten explorations that produced it live on
+`main`, and this branch is only what was chosen. No switcher, no variant flags, no code
+for a path this build never takes.
 
 | | Files | What |
 | --- | --- | --- |
-| **The component** | `src/passkey/` | 16 files. The field itself. Nothing in it knows about the demo, and nothing outside it is needed to use it. |
-| **The demo** | `src/main.tsx`, `src/styles.css`, `src/dev/` | 4 files. The page that renders the field and the switcher that walks the versions. None of it ships with the component. |
+| **The component** | `src/passkey/` | 14 files. The field itself. Nothing in it knows about the page, and nothing outside it is needed to use it. |
+| **The page** | `src/main.tsx`, `src/styles.css` | 2 files. What renders the field. Neither ships with the component. |
 | **The tests** | `tests/`, `playwright.config.ts` | 5 files. 24 tests in a real browser. |
 | **The scaffolding** | `package.json`, `tsconfig*.json`, `vite.config.ts`, `index.html`, `.gitignore` | What Vite and TypeScript need. Untouched from the starting point except for the test scripts. |
 
 ```
-src/passkey/                 the component — nothing in here knows about the demo
+src/passkey/                 the component — nothing in here knows about the page
   index.ts                  the public surface: what an app outside the folder imports
   PasskeyField.tsx          composition, and the copy for each state
   PasskeyCells.tsx          the inputs, the animated glyph, the caret and its block
@@ -105,10 +104,8 @@ src/passkey/                 the component — nothing in here knows about the d
   PasskeyResendDialog.tsx   the confirmation in front of a resend
   StatusIcon.tsx            spinner and check, stacked in one 32px slot
   usePasskey.ts             the state machine — no markup, drives everything
-  variants.ts               what differs between the versions, one flag per trait
   verifyPasscode.ts         stand-in for the auth call, and the resend timings
   timing.ts                 the numbers two modules have to agree on
-  spring.ts                 a damped oscillator sampled into a CSS linear() easing
   passkey.css               the stylesheet's index — the order the parts cascade in
   styles/
     field.css               tokens, and the box the field itself is
@@ -117,12 +114,11 @@ src/passkey/                 the component — nothing in here knows about the d
     resend.css              the resend line
     strip.css               cells, caret, digit
     states.css              focused, verifying, refused, and reduced motion
-    fluid.css               the versions where the box parts from the strip as liquid
+    fluid.css               the neck the box parts from the strip with
     dialog.css              the confirmation
 
-src/dev/                     the harness — none of it ships with the field
-  VersionDots.tsx           the switcher at the foot of the screen
-  versions.css              its styles
+src/main.tsx                 the page that renders it
+src/styles.css               and centres it
 ```
 
 The stylesheet was one file of a thousand lines. Split, each part is the size of the thing
@@ -152,20 +148,6 @@ import { PasskeyField } from "./passkey";
 Left out, `onVerify` and `onResend` fall back to the stand-ins in `verifyPasscode.ts`,
 which is what makes the demo answer to `1234`.
 
-**The behaviour, without the version numbers.** `version` is a shorthand for a set of
-traits — how a digit arrives, how the caret crosses, whether there is a send box, what
-happens on a rejection. `behaviourOf` turns a version into that set, and the field takes
-the set directly, so a field that is none of the ten can still be described:
-
-```tsx
-import { PasskeyField, behaviourOf } from "./passkey";
-
-<PasskeyField behaviour={{ ...behaviourOf(8), hasSend: false, caret: "jump" }} />
-```
-
-That is the layer that keeps the exploration out of the component's surface: the field
-reads one object, and `variants.ts` is only one way of producing it.
-
 **The machine, without the markup.** `usePasskey` holds `idle → verifying → success |
 error`, the hold-to-repeat runs, the two Backspace modes and the resend cooldown, and
 renders nothing. It will drive a strip of your own:
@@ -182,101 +164,7 @@ names on the field or anything above it — `--pk-focus`, `--pk-face`, `--pk-lin
 timing. Two fields on one page are independent; nothing reaches into the document to find
 its own parts.
 
-## The versions
 
-The brief left the transitions open, so rather than pick one reading and present it as
-the answer, nine of them are in the build and switchable — the numbered row at the foot
-of the screen, or `?v=<n>`. They run in the order the work happened: the caret on its own,
-then the letters, then the caret carrying the letters, then the send box appearing and
-being worked out over four goes.
-
-**The chosen one is marked with a black dot** and is what the build opens on. The rest are
-kept because the reasoning is more useful than the conclusion — several of them are here
-precisely because they were tried and rejected, and it is easier to say why the last one
-is right with the others next to it.
-
-## Saying what went wrong
-
-This lived beside version 8 for a while, as 8.1, because the cost is real — more copy on
-screen, a dialog in the way, and a field that talks where eight simply behaved. Put next
-to each other the trade was not close, so it is not a variant any more: it is what
-version 8 is.
-
-| Case | What happens |
-| --- | --- |
-| Enter on an incomplete code | Focus goes to the first empty cell and the line reads "Enter all 4 digits." Nothing is sent, so the strip does not go red |
-| Incorrect code | "Incorrect code. Try again." under the strip. The digits stay editable and the message goes the moment one is typed or deleted |
-| Verification fails to connect | "Couldn't verify your code. Try again." — not "incorrect", because no verdict was reached. The digits are kept and can be submitted again |
-| Repeated Enter while verifying | Ignored. One loading sequence, however many presses |
-| Resend | Opens a confirmation naming where the code is going, with Cancel and Resend code |
-| Cancel | Closes, keeps the digits, and puts focus back on the resend link |
-| After a send | The send box goes, because the complete code on screen is now the previous one. Focus lands in the strip — the first empty cell, or the last one on a full code — and the first edit brings the box back. Enter still submits throughout |
-| Confirm | The button becomes "Sending…" and both buttons disable, so a second press is impossible rather than merely ignored |
-| Send succeeds | The dialog closes, "Code resent" stands where the link was, then the wait as a clock — "Resend in 0:30" |
-| Send fails | The dialog stays open with "Couldn't send the code. Try again." Nothing is spent, so no cooldown is armed and it can be retried or cancelled |
-| During the cooldown | Only the resend is disabled. Typing and verification carry on, and at zero "Resend code" comes back |
-
-Under the strip, version 8 centres where the earlier versions sit flush left. Elsewhere the line
-is a caption belonging to the field, the way helper text sits under an input; here it is
-the field's own voice, speaking in whole sentences about what happened, and a sentence
-centred under a centred block is the balanced reading of the two. It only works because
-nothing in this version's copy reflows — the wait is a clock, "Resend in 0:30" through
-"0:01", four characters either way and tabular, so it counts the whole way down without
-either edge moving.
-
-Three things in that list are decisions rather than mechanics:
-
-**An incomplete code is not an error.** It shakes and says what is missing, but the field
-stays idle and the cells keep their colour. Red would say the code was refused; it was
-never asked about.
-
-**A failed connection is not a wrong code.** The stand-in `verifyPasscode` *rejects* rather
-than resolving false, and the hook keeps the two apart all the way to the copy — one means
-retype, the other means try again, and the digits may well be right.
-
-**The confirmation exists because a resend spends something.** A real code goes out and a
-thirty-second wait is armed behind it, so a misclick costs both. It names the address
-because "resend" alone cannot answer the question people have at that point, which is
-whether the code is going somewhere they can still read. It is built on `<dialog>`, which
-already does the top layer, the inert background, the focus trap and Escape correctly.
-
-**It comes out of the link and lands over the strip.** Same curve and same duration as the
-send box opening — 380ms out on `cubic-bezier(0.33, 1, 0.68, 1)`, 234ms back in, with a
-middle frame wider than it is tall, because something pushed out through a small opening
-is fatter across the opening than along it. The transform origin is the link's centre in
-the dialog's own coordinates, so it grows out of the control that was pressed rather than
-out of its own middle, and Cancel runs it backwards into the link. It is centred on the
-strip and stands a little proud of it: the question is about the code typed there, and
-asked anywhere else it is a notice about the field rather than something happening to it.
-Matched to the strip's width exactly it read as a lid fitted to the box — one object, and
-the question a state of the field rather than a thing arriving on top of it.
-
-## Where this departs from the design
-
-The supplied screens define the states. What happens between them is what the exercise
-left open, and that is where all of this work sits — with one deliberate exception.
-
-**Version 9 changes a state.** The design's authenticated mark is an outlined square with
-a green tick. Every version here lands on exactly that, including the chosen one. Version
-9 lands on a filled green circle with a white tick instead.
-
-The reason is the frame before it. The spinner is eight spokes on a ring, and on success
-they are pulled inward until they overlap into one solid dot; the mark is then handed that
-dot and opens out of it at the same size — scaled from .12, a 24px mark is 2.88px across,
-which is the dot.
-
-Handing that dot to an outlined square loses two things at once. It loses its **mass**:
-something filled becomes something hollow, so the mark reads as a new shape arriving
-rather than as the dot opening. And it loses its **shape**: the thing the spokes make is
-round, and the thing they were arranged on was a ring. Filled and round, none of that is
-dropped — the loader closes into a dot and the dot grows into the mark, one object the
-whole way through.
-
-So version 9 is what the transition wants the state to be, and the chosen version is what
-the design says it is. Both are in the build because that disagreement is worth showing
-rather than settling quietly. If the design's mark is fixed, the chosen version is already
-faithful to it and nothing needs to change; if it is not, version 9 is the argument for
-moving it.
 
 ## Decisions worth naming
 
@@ -327,7 +215,7 @@ cells exit. That's an inference from what the frame omits.
 middle cell focused; squaring off an end would break the strip's silhouette.
 
 **State never shifts the layout.** The status row holds its 32px whether or not it has a
-message, and from version 8 on the field holds the height of its tallest state — so the
+message, and the field holds the height of its tallest state — so the
 failure line appears in space that was already reserved rather than lifting the cells 19px
 at the moment you are about to retype them.
 

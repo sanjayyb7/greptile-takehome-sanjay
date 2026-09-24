@@ -52,14 +52,9 @@
   animation-delay: calc((var(--i) - 7) * 112.5ms); }
 @keyframes pk-trail { from { opacity: 1; } to { opacity: .12; } }
 
-/* ---- how the pins spin while waiting. data-spin picks one; default is the trail. ---- */
+/* ---- how the pins spin while waiting ---- */
 
-/* comet — a bright head with a short tail; reads faster than the even trail */
-.passkey[data-spin="comet"] .pk-spoke { animation: pk-comet .8s linear infinite;
-  animation-delay: calc((var(--i) - 7) * 100ms); }
-@keyframes pk-comet { 0% { opacity: 1; } 32%, 100% { opacity: .08; } }
-
-/* wave — each pin brightens and ticks outward as the light reaches it */
+/* each pin brightens and ticks outward as the light reaches it */
 .passkey[data-spin="wave"] .pk-spoke { animation: pk-wave .9s ease-in-out infinite;
   animation-delay: calc((var(--i) - 7) * 112.5ms); }
 @keyframes pk-wave {
@@ -67,188 +62,12 @@
   45%, 100% { transform: rotate(calc(var(--a) * 1deg)) translate(0, -10px); opacity: .18; }
 }
 
-/* sweep — one pin lit at a time, hard on and off, like a segmented indicator */
-.passkey[data-spin="sweep"] .pk-spoke { animation: pk-sweep .72s steps(1, end) infinite;
-  animation-delay: calc((var(--i) - 7) * 90ms); }
-@keyframes pk-sweep { 0%, 12% { opacity: 1; } 12.01%, 100% { opacity: .1; } }
-
-/* pulse — no rotation at all; the whole ring breathes together */
-.passkey[data-spin="pulse"] .pk-spoke { animation: pk-pulse 1.1s ease-in-out infinite alternate;
-  animation-delay: 0s; }
-@keyframes pk-pulse { from { opacity: 1; } to { opacity: .22; } }
-
-/* the cells go first, closing like an eye: both edges clip in to the centre line, so the
-   digits are covered rather than squashed and the edges stay crisp all the way shut */
-.passkey[data-phase="clearing"] .pk-strip { animation: pk-eyelid 110ms var(--ease-out) forwards;
-  pointer-events: none; }
-@keyframes pk-eyelid {
-  from { clip-path: inset(0 0 0 0); }
-  to   { clip-path: inset(50% 0 50% 0); }
-}
-
-/* the shut strip's space closes in one frame; the status line's slide into it is a
-   measured FLIP on transform (see PasskeyField) rather than an animated height */
-
-/* only then the swish: the spokes sweep round and fly out to the square's edges.
-   Keyframes rather than transitions — dropping the trail animation makes opacity jump to
-   its base value instead of transitioning, which left the spokes invisible in flight. */
-.passkey[data-phase="done"] .pk-spoke {
-  animation: pk-swish 120ms var(--ease-in-out) forwards,
-             pk-spoke-out 80ms var(--ease-out) 120ms forwards; }
-@keyframes pk-swish {
-  0%   { transform: rotate(calc(var(--a) * 1deg)) translate(0, -10px); opacity: 1; }
-  55%  { transform: rotate(calc((var(--a) + 110) * 1deg)) translate(0, -13.5px); opacity: 1; }
-  100% { transform: translate(calc(var(--tx) * 1px), calc(var(--ty) * 1px)) rotate(calc(var(--tr) * 1deg)); opacity: 1; }
-}
-@keyframes pk-spoke-out { from { opacity: 1; } to { opacity: 0; } }
-
-/* the square takes the spokes' place once they're gone, then the tick draws */
-.passkey[data-phase="done"] .pk-spinner { filter: blur(var(--pk-mark-blur));
-  transition: filter 160ms var(--ease-out); }
-.pk-check { filter: blur(var(--pk-mark-blur)); }
-.passkey[data-phase="done"] .pk-check { opacity: 1; filter: blur(0);
-  transition: filter 240ms var(--ease-out) 80ms; }
-.pk-check-wall { opacity: 0; }
-.passkey[data-phase="done"] .pk-check-wall { opacity: 1;
-  transition: opacity 80ms var(--ease-out) 120ms; }
-
-/* the tick is the same path, revealed left to right inside the square — it reads as drawn.
-   Insets are px within the 24px box: the inner region is 4.5 / 6.5 / 5.5 / 4.5. */
-.pk-check-tick { clip-path: inset(6.5px 19.5px 5.5px 4.5px); }
-.passkey[data-phase="done"] .pk-check-tick { clip-path: inset(6.5px 4.5px 5.5px 4.5px);
-  transition: clip-path 140ms var(--ease-out) 180ms; }
-
-/* the new label focuses in rather than sliding — blur carries the "materialising" read,
-   the 3px rise just stops it feeling static. Blur stays small; it is expensive in Safari. */
-/* ---------- The original hand-off, before any of the work below ----------
-
-   The design draws the spinner as one path, and the first build rotated it in eight
-   steps. Stepped, not linear: eight spokes at 45 degrees are identical under continuous
-   rotation, so a smooth spin reads as a glyph sitting still. The step is what turns.
-
-   Success swaps it for the filled checkbox and the line stays where it is — the strip
-   leaves, and what is left recentres. Nothing gathers, nothing is drawn, nothing travels
-   down to where the cells were. The 24px it was set at is now the size every version's
-   label is, so it is declared once at the top rather than here. */
-.pk-spin-origin { animation: pk-spin-origin 1s steps(8) infinite; }
-@keyframes pk-spin-origin { to { rotate: 360deg; } }
-/* it arrives the way the digits of its era did — resolving, not appearing */
-.pk-check-origin { animation: pk-origin-mark 200ms var(--ease-out) both; }
-@keyframes pk-origin-mark {
-  from { opacity: 0; filter: blur(var(--pk-mark-blur)); }
-  to   { opacity: 1; filter: blur(0); }
-}
 @media (prefers-reduced-motion: reduce) {
   .pk-spin-origin { animation: none; }
   .pk-check-origin { animation: none; }
 }
 
-/* ---------------------------------------------------------------------------------------
-   Alternative hand-offs, switched with data-mark on the field. Default (no attribute) is
-   the "swish" above; each variant only overrides what it needs to.
-   --------------------------------------------------------------------------------------- */
-
-/* collapse — the spokes fall into the centre and the mark grows out of that point */
-.passkey[data-mark="collapse"][data-phase="done"] .pk-spoke {
-  animation: pk-collapse 180ms var(--ease-in-out) forwards; }
-@keyframes pk-collapse {
-  from { transform: rotate(calc(var(--a) * 1deg)) translate(0, -10px); opacity: 1; }
-  to   { transform: rotate(calc(var(--a) * 1deg)) translate(0, 0) scale(.3); opacity: 0; }
-}
-.passkey[data-mark="collapse"] .pk-check { scale: .6; }
-.passkey[data-mark="collapse"][data-phase="done"] .pk-check { scale: 1; opacity: 1; filter: blur(0);
-  transition: scale 260ms var(--ease-out) 140ms,
-              opacity 160ms ease 140ms, filter 220ms ease 140ms; }
-
-/* stamp — no travel: the spinner drops out and the mark presses in from slightly oversize */
-.passkey[data-mark="stamp"][data-phase="done"] .pk-spoke {
-  animation: pk-spoke-out 100ms ease forwards; }
-.passkey[data-mark="stamp"] .pk-check { scale: 1.1; }
-.passkey[data-mark="stamp"] .pk-check-tick { clip-path: inset(6.5px 4.5px 5.5px 4.5px); }
-.passkey[data-mark="stamp"][data-phase="done"] .pk-check { scale: 1; opacity: 1; filter: blur(0);
-  transition: scale 280ms var(--ease-out), opacity 140ms ease, filter 260ms ease; }
-
-/* dissolve — nothing moves at all; the two states cross-blur into each other */
-.passkey[data-mark="dissolve"] .pk-check { filter: blur(14px); }
-.passkey[data-mark="dissolve"] .pk-check-tick { clip-path: inset(6.5px 4.5px 5.5px 4.5px); }
-.passkey[data-mark="dissolve"][data-phase="done"] .pk-spoke {
-  animation: pk-spoke-out 220ms ease forwards; }
-.passkey[data-mark="dissolve"][data-phase="done"] .pk-spinner { filter: blur(6px); }
-.passkey[data-mark="dissolve"][data-phase="done"] .pk-check { opacity: 1; filter: blur(0);
-  transition: opacity 260ms ease 60ms, filter 300ms ease 60ms; }
-
-/* enclose — the pins hold their ring while the box grows out of the middle and closes,
-   swallowing them as it reaches them; only then does the tick appear inside it. The two
-   halves of the glyph are separate <g>s, so they can be timed independently. */
-.passkey[data-mark="enclose"] .pk-check { opacity: 1; filter: none; }
-.passkey[data-mark="enclose"] .pk-check-tick { clip-path: inset(6.5px 4.5px 5.5px 4.5px);
-  opacity: 0; scale: .75; }
-.passkey[data-mark="enclose"] .pk-check-wall { opacity: 0; scale: .25; }
-.passkey[data-mark="enclose"][data-phase="done"] .pk-spinner { filter: none; }
-
-/* 1. the box grows and closes */
-.passkey[data-mark="enclose"][data-phase="done"] .pk-check-wall { opacity: 1; scale: 1;
-  transition: opacity 90ms ease, scale 280ms var(--ease-out); }
-/* 2. the pins go as the wall passes over them */
-.passkey[data-mark="enclose"][data-phase="done"] .pk-spoke {
-  animation: pk-spoke-out 140ms ease 80ms forwards; }
-/* 3. only once the box has settled does the tick appear inside it */
-.passkey[data-mark="enclose"][data-phase="done"] .pk-check-tick { opacity: 1; scale: 1;
-  transition: opacity 140ms ease 260ms, scale 200ms var(--ease-out) 260ms; }
-
-/* v1 — the long-form hand-off, sequenced from PasskeyField:
-     0ms     the cells fade while the spokes gather into one solid dot
-     440ms   the dot opens into the square and the tick draws; the label swaps upward
-     1080ms  icon and text travel down together into the space the cells left */
-
-/* the spokes wave outward as they light, clockwise, for the whole wait */
-.passkey[data-mark="v1"][data-state="verifying"] .pk-spoke {
-  animation: pk-wave .9s ease-in-out infinite;
-  animation-delay: calc((var(--i) - 7) * 112.5ms); }
-
-/* 1. cells fade in place — no eyelid here, the strip's space is kept */
-.passkey[data-mark="v1"][data-phase] .pk-strip {
-  animation: pk-v1-cells-out 240ms var(--ease-out) forwards; pointer-events: none; }
-@keyframes pk-v1-cells-out { to { opacity: 0; } }
-
-/* 2. the spokes gather into a dot at the centre */
-.passkey[data-mark="v1"][data-phase] .pk-spoke {
-  animation: pk-v1-gather 300ms var(--ease-out) forwards; }
-/* no opacity here on purpose: a forwards fill would pin it and outrank the rule that
-   fades the dot out when the square opens */
-@keyframes pk-v1-gather {
-  from { transform: rotate(calc(var(--a) * 1deg)) translate(0, -10px); }
-  to   { transform: rotate(calc(var(--a) * 1deg)) translate(0, -1.6px) scale(1, .26); }
-}
-
-/* 3. the dot opens into the square, then the tick draws inside it */
-.passkey[data-mark="v1"] .pk-check { opacity: 1; filter: none; }
-.passkey[data-mark="v1"] .pk-check-wall { opacity: 0; scale: .14; }
-.passkey[data-mark="v1"][data-phase="done"] .pk-spoke,
-.passkey[data-mark="v1"][data-phase="settled"] .pk-spoke { opacity: 0;
-  transition: opacity 120ms var(--ease-out); }
-.passkey[data-mark="v1"][data-phase="done"] .pk-check-wall,
-.passkey[data-mark="v1"][data-phase="settled"] .pk-check-wall { opacity: 1; scale: 1;
-  transition: scale 280ms var(--ease-out), opacity 110ms ease; }
-.passkey[data-mark="v1"][data-phase="done"] .pk-check-tick,
-.passkey[data-mark="v1"][data-phase="settled"] .pk-check-tick {
-  clip-path: inset(6.5px 4.5px 5.5px 4.5px);   /* the base rule only covers data-phase="done" */
-  transition: clip-path 220ms var(--ease-out) 200ms; }
-
-/* 4. the label swaps upward: the old one leaves as the new one arrives */
-.passkey[data-mark="v1"] .pk-status-text {
-  animation: pk-v1-label-in 260ms var(--ease-out) both; }
-@keyframes pk-v1-label-in {
-  from { opacity: 0; translate: 0 16px; filter: blur(var(--pk-label-blur)); }
-  to   { opacity: 1; translate: 0 0; filter: blur(0); }
-}
-
-/* 5. icon and text travel down together into the cells' place. 96px is the gap between
-   the status line's centre and the strip's: 32/2 up top, 16 of gap, 128/2 below. */
-.passkey[data-mark="v1"][data-phase="settled"] .pk-status { translate: 0 96px;
-  transition: translate 440ms var(--ease-out); }
-
-/* v2 — one coordinated timeline, measured from the moment verification succeeds:
+/* One coordinated timeline, measured from the moment verification succeeds:
      0ms    GATHER   cells and arrow fade over 160ms; the eight spokes stop waving and
                      pull into their shared centre over 280ms, brightening as they go
      280ms  COMBINE  the solid dot holds still for 80ms, so the merge is perceptible
@@ -330,51 +149,3 @@
    layout: half the status row (16) + the column gap (16) + half the strip (64). */
 .passkey[data-mark="v2"][data-phase="settled"] .pk-status { translate: 0 96px;
   transition: translate 280ms var(--ease-in-out); }
-
-/* merge — the pins become the whole checkbox: four stretch into the square's four sides,
-   four squash onto the tick's strokes, so the mark is assembled out of the lines that were
-   spinning. The real glyph then takes over underneath them. */
-.passkey[data-mark="merge"] .pk-check-tick { clip-path: inset(6.5px 4.5px 5.5px 4.5px); }
-/* no blur in this one: the lines already drew the mark, so it has nothing to resolve from,
-   and blurring the spokes on the way out would smear the tick they just formed */
-.passkey[data-mark="merge"] .pk-check { filter: none; }
-.passkey[data-mark="merge"][data-phase="done"] .pk-spinner { filter: none; }
-.passkey[data-mark="merge"][data-phase="done"] .pk-spoke {
-  animation: pk-merge 300ms var(--ease-out) forwards,
-             pk-spoke-out 140ms ease 300ms forwards; }
-@keyframes pk-merge {
-  from { transform: rotate(calc(var(--a) * 1deg)) translate(0, -10px); opacity: 1; }
-  to   { transform: translate(calc(var(--gx) * 1px), calc(var(--gy) * 1px))
-                    rotate(calc(var(--gr) * 1deg)) scale(1, var(--gs)); opacity: 1; }
-}
-.passkey[data-mark="merge"][data-phase="done"] .pk-check { opacity: 1;
-  transition: opacity 160ms ease 300ms; }
-
-/* draw — the spinner leaves, then the square is drawn left to right and the tick follows */
-.passkey[data-mark="draw"] .pk-check { filter: none; }
-.passkey[data-mark="draw"] .pk-check-wall { clip-path: inset(0 100% 0 0); }
-.passkey[data-mark="draw"][data-phase="done"] .pk-spoke {
-  animation: pk-spoke-out 100ms ease forwards; }
-.passkey[data-mark="draw"][data-phase="done"] .pk-check { opacity: 1; }
-.passkey[data-mark="draw"][data-phase="done"] .pk-check-wall { opacity: 1; clip-path: inset(0 0 0 0);
-  transition: clip-path 260ms var(--ease-out) 80ms, opacity 1ms 80ms; }
-.passkey[data-mark="draw"][data-phase="done"] .pk-check-tick {
-  transition: clip-path 200ms var(--ease-out) 340ms; }
-
-.pk-status-text { animation: pk-label-in 220ms var(--ease-out) both; }
-@keyframes pk-label-in {
-  from { opacity: 0; filter: blur(var(--pk-label-blur)); translate: 0 3px; }
-  to   { opacity: 1; filter: blur(0);                    translate: 0 0; }
-}
-
-/* failure copy sits under the strip, flush with its left edge, behind a circled mark */
-.pk-problem { align-self: flex-start; margin: 0; color: var(--pk-bad);
-  display: flex; align-items: center; gap: 8px;
-  font-family: "Inter", system-ui, sans-serif; font-size: 17px; font-weight: 400; line-height: 22px;
-  animation: pk-problem-in 260ms var(--ease-out) both; }
-/* the mark keeps its size whatever the copy does, and never squeezes the text */
-.pk-problem svg { flex: none; }
-@keyframes pk-problem-in {
-  from { opacity: 0; filter: blur(4px); translate: 0 -4px; }
-  to   { opacity: 1; filter: blur(0);   translate: 0 0; }
-}

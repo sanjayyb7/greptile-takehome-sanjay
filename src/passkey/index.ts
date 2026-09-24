@@ -5,13 +5,10 @@
 
      import { PasskeyField } from "./passkey";
 
-   Three layers, each usable on its own:
+   Two layers, each usable on its own:
      PasskeyField   the whole thing — cells, send box, status line, resend
      usePasskey     the state machine with no markup, for a field of your own
-     Behaviour      what the field does, as data, so a consumer can describe one that is
-                    none of the ten explorations
 */
 export { PasskeyField } from "./PasskeyField";
 export { usePasskey } from "./usePasskey";
-export { behaviourOf, FINAL, VERSIONS, type Behaviour, type Version } from "./variants";
 export { verifyPasscode, requestNewCode, RESEND_COOLDOWN_S } from "./verifyPasscode";

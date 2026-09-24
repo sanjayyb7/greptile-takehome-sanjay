@@ -32,8 +32,7 @@ export class Field {
     this.dialogProblem = page.locator(".pk-dialog-problem");
   }
 
-  /** version 8 is the chosen one — it answers every case out loud */
-  static async open(page: Page, query = "?v=8") {
+  static async open(page: Page, query = "") {
     await page.goto(`/${query}`);
     const field = new Field(page);
     await expect(field.cells.first()).toBeFocused();

@@ -1,7 +1,6 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { PasskeySend, SEND_IN_MS, SEND_OUT_MS } from "./PasskeySend";
 import { PASTE_FADE_MS, PASTE_SEND_MS, SHAKE_MS } from "./timing";
-import type { CaretStyle } from "./variants";
 import type { usePasskey } from "./usePasskey";
 
 type Passkey = ReturnType<typeof usePasskey>;
@@ -74,14 +73,13 @@ function caretMs(el: Element | null) {
  * that exit so the two never overlap.
  */
 function Digit(
-  { value, stamp, fade, vanish, crossMs, written }:
+  { value, stamp, fade, crossMs }:
   { value: string; stamp: number;
     /** resolves into focus rather than travelling: "paste" takes the paste's own short
      *  window, "typed" the digit's full duration, which is what the first version used */
     fade: false | "paste" | "typed";
     /** the long travel, all the way through the cell's bottom edge — see version 13 */
-    vanish: boolean;
-    crossMs?: number; written: boolean },
+    crossMs?: number },
 ) {
   const [shown, setShown] = useState(value);
   const [leaving, setLeaving] = useState<string | null>(null);
@@ -122,38 +120,20 @@ function Digit(
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let out = ms;
     if (el && !still) {
-      const style = getComputedStyle(el);
-      const blur = style.getPropertyValue("--pk-digit-blur").trim() || "4px";
-      // The long exit: it does not fade at all. It slides down the whole height of the
-      // cell and the cell's own edge is what takes it — which is the difference between
-      // a digit disappearing and a digit going somewhere.
-      if (vanish) {
-        const rise = style.getPropertyValue("--pk-vanish-rise").trim() || "92px";
-        const soft = style.getPropertyValue("--pk-digit-ease").trim() || "ease-out";
-        out = parseFloat(style.getPropertyValue("--pk-vanish-ms")) || 320;
-        el.animate(
-          [{ translate: "0 0", opacity: 1, filter: "blur(0)" },
-           { translate: `0 ${rise}`, opacity: 1, filter: "blur(0)" }],
-          { duration: out, easing: soft, fill: "both" },
-        );
-      } else {
-        el.animate(
-          written
-            ? [{ opacity: 1, scale: "1" },
-               { opacity: 0, scale: "0.5", offset: 0.5 },
-               { opacity: 0, scale: "0.5" }]
-            : [{ opacity: 1, filter: "blur(0)" },
-               { opacity: 1, offset: 0.7 },
-               { opacity: 0, filter: `blur(${blur})` }],
-          { duration: ms, easing: "ease-in-out", fill: "both" },
-        );
-      }
+      // rubbed out the way it was written: held at full size until the block covers the
+      // cell, then gone behind it
+      el.animate(
+        [{ opacity: 1, scale: "1" },
+         { opacity: 0, scale: "0.5", offset: 0.5 },
+         { opacity: 0, scale: "0.5" }],
+        { duration: ms, easing: "ease-in-out", fill: "both" },
+      );
     }
     exitMs.current = out;
 
     const id = window.setTimeout(() => setLeaving(null), out);
     return () => clearTimeout(id);
-  }, [leaving, written, vanish]);
+  }, [leaving]);
 
   // WAAPI, not a keyframe: typing is the fastest-triggered motion here, and a keyframe
   // restarts from zero. Reading the element's current values first means a digit entered
@@ -195,21 +175,6 @@ function Digit(
       return;
     }
 
-    // The long entrance: it starts wholly below the cell and travels up through the
-    // bottom edge, opaque early so it is visible for the whole of the journey. No blur
-    // and no scaling — the travel is the whole of it.
-    if (vanish) {
-      const rise = style.getPropertyValue("--pk-vanish-rise").trim() || "92px";
-      const riseMs = parseFloat(style.getPropertyValue("--pk-vanish-ms")) || 320;
-      el.animate(
-        [held ?? { translate: `0 ${rise}`, opacity: 0, scale: "1", filter: "blur(0)" },
-         { opacity: 1, offset: 0.25 },
-         { translate: "0 0", opacity: 1, scale: "1", filter: "blur(0)" }],
-        { duration: riseMs, easing, fill: "both" },
-      );
-      return;
-    }
-
     /*
      * Typed, the digit is written by the block passing over it rather than arriving on
      * its own. It is held at nothing for the first half, which is exactly as long as the
@@ -221,27 +186,13 @@ function Digit(
      * ease-in-out, matching the block's own curve, so the two stay in step across the
      * whole of it and not merely at the ends.
      */
-    if (written) {
-      el.animate(
-        [held ?? { opacity: 0, scale: "0.5", translate: "0 0", filter: "blur(0)" },
-         { opacity: 0, scale: "0.5", offset: 0.5 },
-         { opacity: 1, scale: "1", translate: "0 0", filter: "blur(0)" }],
-        { duration: ms, easing: "ease-in-out", fill: "both" },
-      );
-      return;
-    }
-
-    // versions 1 and 2: it travels up into the cell, opaque early so it is visible for
-    // the whole of the journey, and soft until it lands
-    const rise = style.getPropertyValue("--pk-rise").trim() || "24px";
-    const typedMs = parseFloat(style.getPropertyValue("--pk-digit-ms")) || 180;
     el.animate(
-      [held ?? { translate: `0 ${rise}`, opacity: 0, scale: "1", filter: `blur(${blur})` },
-       { opacity: 1, offset: 0.3 },
-       { translate: "0 0", opacity: 1, scale: "1", filter: "blur(0)" }],
-      { duration: typedMs, easing, fill: "both" },
+      [held ?? { opacity: 0, scale: "0.5", translate: "0 0", filter: "blur(0)" },
+       { opacity: 0, scale: "0.5", offset: 0.5 },
+       { opacity: 1, scale: "1", translate: "0 0", filter: "blur(0)" }],
+      { duration: ms, easing: "ease-in-out", fill: "both" },
     );
-  }, [value, stamp, fade, vanish, written]);
+  }, [value, stamp, fade]);
 
   // no key: the span persists so an in-flight entrance has something to retarget from
   if (value) return <span className="pk-digit" ref={glyph}>{value}</span>;
@@ -258,29 +209,12 @@ function Digit(
  * movement. The earlier explorations move it instead, and the smear needs to know when a
  * journey is under way, which is what data-moving marks.
  */
-function Caret({ index, hidden, smears }: { index: number; hidden: boolean; smears: boolean }) {
-  const [moving, setMoving] = useState(false);
-  const self = useRef<HTMLSpanElement>(null);
-  const was = useRef(index);
-  useEffect(() => {
-    if (was.current === index) return;
-    was.current = index;
-    if (!smears) return;
-    setMoving(true);
-    // this caret's own duration, read off this caret. It used to be found by class from
-    // the document, which is the same element only while there is one field on the page.
-    const el = self.current;
-    const ms = el ? parseFloat(getComputedStyle(el).getPropertyValue("--pk-caret-ms")) || 300 : 300;
-    const id = window.setTimeout(() => setMoving(false), ms);
-    return () => clearTimeout(id);
-  }, [index, smears]);
+function Caret({ index, hidden }: { index: number; hidden: boolean }) {
   return (
     <span
-      ref={self}
       className="pk-caret"
       aria-hidden="true"
       data-hidden={hidden || undefined}
-      data-moving={moving || undefined}
       style={{ "--pk-caret-i": index } as React.CSSProperties}
     />
   );
@@ -406,21 +340,8 @@ const WipeHalf = forwardRef<HTMLSpanElement, { wipe: Wipe; cell: number }>(
  * screen-reader label — with the glyph painted in a decorative layer on top, because an
  * input's own text can't be animated.
  */
-export function PasskeyCells({ passkey, length, send, written, fadeIn, vanish, caret, noCaret, handsBack, staleOnResend, falls, fluid, fluidBlock, smooth, clears }: {
-  passkey: Passkey; length: number; send?: boolean; written: boolean;
-  /** the digit resolves into focus where it lands, the way a pasted one always has */
-  fadeIn: boolean;
-  /** the digit travels the whole height of the cell, in and out past its bottom edge */
-  vanish: boolean;
-  /** how the caret gets between cells — see caretStyle */
-  caret: CaretStyle;
-  /** and whether there is one to see at all — see hidesCaret */
-  noCaret: boolean;
-  /** a rejection takes the send box away — see handsBackOnError */
-  handsBack: boolean;
-  /** and so does a new code arriving — see staleOnResend */
-  staleOnResend: boolean;
-  falls: boolean; fluid: boolean; fluidBlock: boolean; smooth: boolean; clears: boolean;
+export function PasskeyCells({ passkey, length, send }: {
+  passkey: Passkey; length: number; send?: boolean;
 }) {
   const { digits, stamps, status, shake, busy, focused, cells, write, onKeyDown, onPaste, onFocus, onBlur, erasePace, entry, stale, picked, pick } = passkey;
   const strip = useRef<HTMLDivElement>(null);
@@ -433,38 +354,33 @@ export function PasskeyCells({ passkey, length, send, written, fadeIn, vanish, c
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const opts = { duration: SHAKE_MS, easing: "cubic-bezier(0.77, 0, 0.175, 1)" } as const;
     strip.current.animate(SHAKE, opts);
-    if (!fluid) return;
     // no fill on any of these: each ends on the value the send box's own animations are
     // already holding, so letting them expire hands control straight back
     strip.current.querySelector(".pk-send")?.animate(SHAKE_DRAG, opts);
     strip.current.querySelector(".pk-goo-blob")?.animate(SHAKE_DRAG, opts);
     strip.current.querySelector(".pk-goo-root")?.animate(SHAKE_NECK, opts);
-  }, [shake, fluid]);
+  }, [shake]);
 
   // matches PasskeySend's own condition: while the box is on screen the last cell gives up
   // its rounded corner, so the two stay flush — including through verifying, where the box
   // waits dimmed rather than leaving
   // the same condition the box itself is under, so the last cell takes its corner back
   // on the frame the box starts leaving rather than after it has gone
-  const refused = handsBack && status === "error";
+  const refused = status === "error";
   /* A code has just been sent, so the complete one on screen is the previous one. Same
      reasoning as a refusal: the button's whole meaning would be "send that", and that is
      the one thing it should not be offering. Taking it away says what is true — the code
      that matters is the one arriving — and hands the cell back its caret, which the box
      holds while it is up. */
-  const superseded = staleOnResend && stale;
-  const showSend = Boolean(send) && digits.every(Boolean) && !(clears && busy)
-    && !refused && !superseded;
+  const showSend = Boolean(send) && digits.every(Boolean) && !busy && !refused && !stale;
   // The send box is the position after the last cell. The caret's travel does not stop at
   // the strip's edge: when the box opens the block carries on out into it, and when the
   // box folds away the block comes back out of it into the cell it came from. Only the
   // half inside the last cell is ever drawn — the other lies under the box, where a green
   // block on a green box would show nothing anyway.
   const caretAt = showSend ? length : focused;
-  // a null index keeps the hook mounted but stops it ever producing a wipe, which is what
-  // leaves the caret to move on its own in the three versions that predate the block
-  const wipes = caret === "wipe";
-  const { wipe, ref: wipeRef } = useWipe(busy || !wipes ? null : caretAt, erasePace, length,
+
+  const { wipe, ref: wipeRef } = useWipe(busy ? null : caretAt, erasePace, length,
     entry === "paste", refused);
 
   return (
@@ -493,60 +409,31 @@ export function PasskeyCells({ passkey, length, send, written, fadeIn, vanish, c
             onPointerDown={pick}
             onBlur={onBlur}
           />
-          {/*
-            * The block and the caret share a filtered layer, so the two of them behave
-            * as one body of liquid: the block leaves the caret with a neck between them,
-            * it thins as the block crosses, and it snaps. The digit is deliberately not
-            * in here — a blur and an alpha threshold would make a mess of a glyph.
-            *
-            * Inset and clipped exactly as .pk-clip is, so the block still passes under
-            * the divider rather than across it.
-            */}
-          {fluidBlock && (
-            <span className="pk-goo-cell" aria-hidden="true">
-              {wipe && (wipe.to > wipe.from ? wipe.from === i : wipe.to === i) && (
-                <WipeHalf wipe={wipe} cell={i} ref={i === wipe.to ? wipeRef : undefined} />
-              )}
-              {focused === i && !digit && !busy && <span className="pk-caret-bead" />}
-              {/* the bead the block is leaving. The caret itself has already gone on to
-                  the next cell, so without this there is nothing in here for the block to
-                  part from — and parting from something is the whole effect. It holds
-                  while the neck forms, then is drawn back in after it snaps. */}
-              {wipe && wipe.to > wipe.from && wipe.from === i && (
-                <span className="pk-caret-bead" data-parting="" key={wipe.id}
-                  style={{ "--pk-wipe-ms": `${wipe.ms}ms` } as React.CSSProperties} />
-              )}
-            </span>
-          )}
           <span className="pk-clip" aria-hidden="true">
             <Digit
               value={digit}
               stamp={stamps[i]}
-              fade={entry === "paste" ? "paste" : fadeIn ? "typed" : false}
-              vanish={vanish}
+              fade={entry === "paste" ? "paste" : false}
               /* the block crossing this cell is what writes its digit and what rubs it
                  out: going forward it sets out from this cell, going back it lands on it */
               crossMs={wipe && (wipe.to > wipe.from ? wipe.from === i : wipe.to === i)
                 ? wipe.ms : undefined}
-              written={written}
             />
             {/* every cell the block passes over draws its share of it, not just the two
                 it starts and ends in — otherwise a jump across the strip goes missing in
                 the middle, because each cell clips to itself and there is nobody in
                 between to draw the part that crosses them */}
-            {!fluidBlock && wipe
+            {wipe
               && i >= Math.min(wipe.from, wipe.to) && i <= Math.max(wipe.from, wipe.to) && (
               <WipeHalf wipe={wipe} cell={i} ref={i === wipe.to ? wipeRef : undefined} />
             )}
           </span>
         </span>
       ))}
-      {/* the fluid version keeps its caret inside the cell, in with the block */}
-      {!fluidBlock && !noCaret && focused !== null && !busy && (
-        <Caret index={focused} hidden={Boolean(digits[focused])} smears={caret === "smear"} />
+      {focused !== null && !busy && (
+        <Caret index={focused} hidden={Boolean(digits[focused])} />
       )}
-      {send && <PasskeySend passkey={passkey} falls={falls} fluid={fluid} smooth={smooth}
-        clears={clears} handsBack={handsBack} staleOnResend={staleOnResend} />}
+      {send && <PasskeySend passkey={passkey} />}
     </div>
   );
 }

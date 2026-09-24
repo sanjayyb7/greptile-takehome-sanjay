@@ -16,8 +16,6 @@
      having hard edges. The layer starts --pk-goo-lead left of the strip so the neck's
      root, which reaches back into the cell, is inside it. */
   --pk-goo-lead: 40px; }
-/* a little more room than the other versions: the neck needs somewhere to be */
-.passkey[data-version="5"], .passkey[data-version="6"] { --pk-send-gap: 20px; }
 /* The neck itself, drawn rather than hoped for.
    Two blobs only merge if they are within about the blur of each other, and the box ends
    up a whole gap away from the strip — far too far. So the thing between them is a real
@@ -61,37 +59,3 @@
   .pk-goo { display: none; }
 }
 
-/* ---------- Fluid digits: the block between cells is liquid too ---------- */
-
-/* Clipped exactly as .pk-clip is, so the block still passes under the divider. The goo
-   filter is per cell rather than over the strip for that reason: a filter cannot bridge
-   two clipped boxes, and going over the dividers instead of under them was never on. */
-.pk-goo-cell { position: absolute; inset: 1px; overflow: hidden; pointer-events: none;
-  z-index: 2; filter: var(--pk-goo); }
-.passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within .pk-goo-cell {
-  inset: 3px; }
-
-/* The caret, as a bead rather than a hairline. A 2px bar does not survive a blur and an
-   alpha threshold — it is thinner than the blur and vanishes — so in this version the
-   caret is wide enough to hold its own in the filter, which is also what makes it read
-   as the thing the block parts from and rejoins. */
-.pk-caret-bead { position: absolute; left: 50%; top: 50%;
-  width: 9px; height: 42px; margin: -21px 0 0 -4.5px; border-radius: 5px;
-  background: var(--pk-focus);
-  animation: pk-blink 1s steps(1, end) infinite; }
-
-/* it does not blink — it is not marking anything, it is the liquid being left behind */
-.pk-caret-bead[data-parting] {
-  animation: pk-bead-part var(--pk-wipe-ms, 300ms) var(--ease-out) both; }
-@keyframes pk-bead-part {
-  from { scale: 1 1; }
-  /* holds its size while the neck is still attached, so the neck is what thins */
-  55%  { scale: .82 .92; }
-  to   { scale: 0 .4; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  /* the caret still marks where typing lands; it just has no block to merge with */
-  .pk-goo-cell { filter: none; }
-  .pk-caret-bead[data-parting] { display: none; }
-}

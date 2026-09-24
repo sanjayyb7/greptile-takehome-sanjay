@@ -92,7 +92,7 @@ test.describe("the cases", () => {
   });
 
   test("a failed send keeps the dialog open and allows a retry", async ({ page }) => {
-    const f = await Field.open(page, "?v=8&resendfail");
+    const f = await Field.open(page, "?resendfail");
     await f.resendLink.click();
     await f.dialogConfirm.click();
     await expect(f.dialogProblem).toHaveText("Couldn't send the code. Try again.", VERDICT);
