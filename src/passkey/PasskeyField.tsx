@@ -15,8 +15,8 @@ const LABEL_SWAP_MS = 360;
 type Passkey = ReturnType<typeof usePasskey>;
 
 /** progress sits above the strip, the way the design shows it */
-function progress(p: Passkey) {
-  if (p.status === "verifying" || p.status === "success") return "Verifying...";
+function progress(p: Passkey, plain: boolean) {
+  if (p.status === "verifying" || p.status === "success") return plain ? "Verifying" : "Verifying...";
   return "";
 }
 
@@ -192,7 +192,44 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
 
   // the sequenced styles hold the strip so its space stays reserved to travel into
   const stripMounted = sequenced.current || phase === "none" || phase === "clearing";
-  const above = phase === "done" || phase === "settled" ? "Authenticated" : progress(passkey);
+  const above = phase === "done" || phase === "settled" ? "Authenticated" : progress(passkey, b.plainProgress);
+
+  /*
+   * Hold the row still when the label changes width, and pay the difference inside the
+   * drop.
+   *
+   * Without the ellipsis the lane sizes to its content, so each state centres on the
+   * strip properly — but "Authenticated" is wider than "Verifying", and re-centring moved
+   * the row sideways the moment the word changed. A shift, a pause, and then a fall reads
+   * as three events.
+   *
+   * So the row is pinned where it was: the difference is measured at the swap and held as
+   * an offset, and the drop then animates from that offset to nothing while it travels the
+   * 96px down. The correction happens, but inside a move that was happening anyway, which
+   * is the difference between one gesture and two.
+   */
+  const lastLeft = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const el = statusRef.current;
+    if (!el || !b.plainProgress) return;
+    // An empty row and a row with a word in it are different widths, but that is the line
+    // arriving rather than a word changing length — there is nothing to hold still. Only
+    // the step from one label to another is worth correcting.
+    if (!above) {
+      lastLeft.current = null;
+      el.style.removeProperty("--pk-status-dx");
+      return;
+    }
+    // offsetLeft, not a client rect: the rect includes the very offset being set here, so
+    // reading it fed each measurement back into the next and the row walked off sideways.
+    // offsetLeft is the laid-out position and is blind to the transform.
+    const now = el.offsetLeft;
+    const prev = lastLeft.current;
+    lastLeft.current = now;
+    const dx = prev === null ? 0 : prev - now;
+    if (dx) el.style.setProperty("--pk-status-dx", `${dx}px`);
+    else el.style.removeProperty("--pk-status-dx");
+  }, [above, b.plainProgress]);
 
   // A swap needs both lines on screen at once, so the one being replaced is kept for as
   // long as its animation runs. React would otherwise drop it in the same frame the new
@@ -224,6 +261,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
       data-steady={b.steadyHeight ? "" : undefined}
       data-editcaret={b.editCaret ? "" : undefined}
       data-guarded={b.guarded ? "" : undefined}
+      data-plain={b.plainProgress ? "" : undefined}
       data-flashes={flashes ? "" : undefined}
       data-flash={flash ? "" : undefined}
       data-phase={phase === "none" ? undefined : phase}

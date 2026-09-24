@@ -15,7 +15,7 @@
  *
  * VERSIONS is what is on offer, in the order it is offered in: the row is numbered by
  * position, so this array is the running order and nothing else needs to know about it.
- * The Version union is what the code can still run — 3, 6, 7, 9 and 10 were set aside
+ * The Version union is what the code can still run — 3, 6, 7, 9, 10 and 17 were set aside
  * rather than deleted, so their behaviour is still built and still reachable from the
  * predicates below. Putting one back on the row is a single line here.
  */
@@ -30,8 +30,7 @@ export const VERSIONS: { id: Version; name: string; note: string; label?: string
   { id: 4, name: "Version 4", note: "Send box arrives attached, then is shoved clear — the push opens the gap" },
   { id: 5, name: "Fluid", note: "The box separates from the strip like liquid — a neck thins and breaks" },
   { id: 8, name: "Smooth, box clears", note: "The box opens and clears in one move; the press sends it away, and every case is answered out loud" },
-  { id: 14, label: "9", name: "Filled circle", note: "I changed the confirmation icon you provided from a square to a filled circle, because the loader it comes out of is round" },
-  { id: 17, label: "10", name: "No caret", note: "The ring alone says where the typing goes \u2014 no blinking line inside it" },
+  { id: 14, name: "Filled circle", note: "Eight, with a filled round mark instead of the outlined square, and no ellipsis on the wait" },
 ];
 
 /*
@@ -240,7 +239,18 @@ const editCaret = (v: Version) => v === 8 || v >= 14;
  *
  * So it is not a variant any more. It is what eight is.
  */
-const guarded = (v: Version) => v === 8;
+const guarded = (v: Version) => v === 8 || v === 14;
+
+/**
+ * "Verifying" without the trailing ellipsis.
+ *
+ * Three dots are the convention for a wait, and next to a spinner they are the second
+ * thing saying the same thing — the ring is already turning, and it says it continuously
+ * rather than in three steps. They also make the label a different width in every state,
+ * which the lane has to be held open against. Nine drops them and lets the spinner carry
+ * the waiting.
+ */
+const plainProgress = (v: Version) => v === 14;
 
 /**
  * Everything that differs between the explorations, gathered into one value.
@@ -275,6 +285,7 @@ export type Behaviour = {
   steadyHeight: boolean;
   filledMark: boolean;
   guarded: boolean;
+  plainProgress: boolean;
 };
 
 export const behaviourOf = (v: Version): Behaviour => ({
@@ -297,4 +308,5 @@ export const behaviourOf = (v: Version): Behaviour => ({
   steadyHeight: steadyHeight(v),
   filledMark: filledMark(v),
   guarded: guarded(v),
+  plainProgress: plainProgress(v),
 });
