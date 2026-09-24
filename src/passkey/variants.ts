@@ -30,7 +30,7 @@ export const VERSIONS: { id: Version; name: string; note: string; label?: string
   { id: 4, name: "Version 4", note: "Send box arrives attached, then is shoved clear — the push opens the gap" },
   { id: 5, name: "Fluid", note: "The box separates from the strip like liquid — a neck thins and breaks" },
   { id: 8, name: "Smooth, box clears", note: "The box opens and clears in one move; the press sends it away, and every case is answered out loud" },
-  { id: 14, name: "Filled circle", note: "Eight, with a filled round mark instead of the outlined square, and no ellipsis on the wait" },
+  { id: 14, name: "Filled circle", note: "I changed the design you gave a little, to match the animation: a filled round mark instead of the outlined square, and no ellipsis on the wait" },
 ];
 
 /*

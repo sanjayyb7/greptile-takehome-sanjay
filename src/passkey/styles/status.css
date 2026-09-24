@@ -336,10 +336,15 @@
 /* DROP — icon and text as one row, down to where the cells were. 96px is measured off the
    layout: half the status row (16) + the column gap (16) + half the strip (64). */
 /* the offset that holds the row where it was when the word got longer — see the note in
-   PasskeyField. It is cleared by the drop below, which travels both axes at once. */
+   PasskeyField */
 .passkey[data-plain] .pk-status { translate: var(--pk-status-dx, 0) 0; }
 .passkey[data-mark="v2"][data-phase="settled"] .pk-status { translate: 0 96px;
   transition: translate 280ms var(--ease-in-out); }
+/* and it falls straight down. The row is already where it belongs — held there when the
+   word got longer — so correcting sideways on the way down would be a second thing to
+   watch inside a move that is only meant to say "this is finished, and it goes here".
+   The offset is kept through the drop; only the 96px changes. */
+.passkey[data-plain][data-phase="settled"] .pk-status { translate: var(--pk-status-dx, 0) 96px; }
 
 /* merge — the pins become the whole checkbox: four stretch into the square's four sides,
    four squash onto the tick's strokes, so the mark is assembled out of the lines that were
