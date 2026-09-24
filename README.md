@@ -93,7 +93,7 @@ for a path this build never takes.
 | **The component** | `src/passkey/` | 14 files. The field itself. Nothing in it knows about the page, and nothing outside it is needed to use it. |
 | **The page** | `src/main.tsx`, `src/styles.css` | 2 files. What renders the field. Neither ships with the component. |
 | **The tests** | `tests/`, `playwright.config.ts` | 5 files. 24 tests in a real browser. |
-| **The scaffolding** | `package.json`, `tsconfig*.json`, `vite.config.ts`, `index.html`, `.gitignore` | What Vite and TypeScript need. Untouched from the starting point except for the test scripts. |
+| **The scaffolding** | `package.json`, `tsconfig*.json`, `vite.config.ts`, `index.html`, `.gitignore` | What Vite and TypeScript need. `npm run build` typechecks all three projects — the app, the Vite config, and the tests — so a type error in a spec fails the build rather than waiting for someone to run it. |
 
 ```
 src/passkey/                 the component — nothing in here knows about the page
