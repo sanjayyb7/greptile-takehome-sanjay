@@ -29,7 +29,7 @@ export const VERSIONS: { id: Version; name: string; note: string; label?: string
   { id: 4, name: "Version 4", note: "Send box arrives attached, then is shoved clear — the push opens the gap" },
   { id: 5, name: "Fluid", note: "The box separates from the strip like liquid — a neck thins and breaks" },
   { id: 8, name: "Smooth, box clears", note: "The box opens and clears in one move; the press sends it away, and every case is answered out loud" },
-  { id: 14, name: "Filled circle", note: "Says where the code went first. A wrong code closes the spinner into a red \u201c!\u201d, and success into a filled circle" },
+  { id: 14, name: "Filled circle", note: "Not sure how far I could go, but \u201cCheck your email\u201d with the address on top felt right. A filled circle and no shadow made it feel much better" },
 ];
 
 /*
