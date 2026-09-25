@@ -315,6 +315,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
       data-guarded={b.guarded ? "" : undefined}
       data-plain={b.plainProgress ? "" : undefined}
       data-pours={b.pours ? "" : undefined}
+      data-disc={b.discLoader ? "" : undefined}
       data-verdicts={b.verdictInRow ? "" : undefined}
       data-fail={fail ?? undefined}
       data-flashes={flashes ? "" : undefined}

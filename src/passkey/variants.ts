@@ -29,7 +29,7 @@ export const VERSIONS: { id: Version; name: string; note: string; label?: string
   { id: 4, name: "Version 4", note: "Send box arrives attached, then is shoved clear — the push opens the gap" },
   { id: 5, name: "Fluid", note: "The box separates from the strip like liquid — a neck thins and breaks" },
   { id: 8, name: "Smooth, box clears", note: "The box opens and clears in one move; the press sends it away, and every case is answered out loud" },
-  { id: 14, name: "Filled circle", note: "Says where the code went before asking for it back. I changed the mark you gave to a filled circle to match the loader, and dropped the ellipsis" },
+  { id: 14, name: "Filled circle", note: "Says where the code went first. The send box pours into a green disc that spins, and the disc takes the tick" },
   { id: 18, name: "Liquid pour", note: "The send box is liquid: pressing it pours it up into the loader, and the loader closes into the answer — a tick, or a red \u201c!\u201d" },
 ];
 
@@ -271,7 +271,16 @@ const intro = (v: Version) => v === 14;
  * into spokes already turning. Nothing appears or disappears between the press and the
  * verdict — the green that was pressed is the green that spins. See PasskeyPour.
  */
-const pours = (v: Version) => v === 18;
+const pours = (v: Version) => v === 14 || v === 18;
+
+/**
+ * The loader is a green disc with the spokes turning in white inside it.
+ *
+ * Poured, the drop has to become something: here it lands as the disc and stays one. The
+ * mark is already a filled circle, so the success is the spokes gathering inside a disc
+ * that was there all along and the tick being drawn across it — the green never leaves.
+ */
+const discLoader = (v: Version) => v === 14;
 
 /**
  * The verdict is said in the status row, and a refusal closes the loader into a red "!".
@@ -320,6 +329,7 @@ export type Behaviour = {
   plainProgress: boolean;
   intro: boolean;
   pours: boolean;
+  discLoader: boolean;
   verdictInRow: boolean;
 };
 
@@ -346,5 +356,6 @@ export const behaviourOf = (v: Version): Behaviour => ({
   plainProgress: plainProgress(v),
   intro: intro(v),
   pours: pours(v),
+  discLoader: discLoader(v),
   verdictInRow: verdictInRow(v),
 });

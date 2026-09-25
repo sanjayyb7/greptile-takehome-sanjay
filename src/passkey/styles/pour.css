@@ -101,9 +101,34 @@
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--pk-bad) var(--pk-bad-glow), transparent); }
 .passkey[data-verdicts][data-fail="mark"] .pk-caret { background: var(--pk-bad); }
 
+/* ---------- A loader in a disc (data-disc) ----------
+
+   The drop lands as a 28px disc and stays one: the spokes turn inside it in the colour
+   that sits on green, the way the tick does. Its size is the drop's size at impact, so at
+   land it is already there and only has to be let through; with no pour — the code
+   submitted on its last digit — it grows in from the dot it would have gathered to. */
+.pk-disc { width: 28px; height: 28px; border-radius: 50%; background: var(--pk-focus);
+  opacity: 0; scale: .12; pointer-events: none; }
+/* Under everything else in the slot, explicitly. A scaled element paints after unscaled
+   siblings whatever their order, so at rest the disc covered the tick drawn on top of it. */
+.pk-disc { position: relative; z-index: -1; }
+.passkey[data-disc] .pk-icon { isolation: isolate; }
+.passkey[data-disc][data-state="verifying"] .pk-disc,
+.passkey[data-disc][data-state="success"] .pk-disc { opacity: 1; scale: 1;
+  transition: scale 240ms var(--ease-out), opacity 120ms ease; }
+/* the drop IS the disc while it travels; held at full size so land only fades it through */
+.passkey[data-disc][data-pour="flight"][data-state="verifying"] .pk-disc {
+  opacity: 0; scale: 1; transition: none; }
+/* on the mark's own size by the time the mark arrives, so the hand-over is invisible */
+.passkey[data-disc][data-phase="done"] .pk-disc,
+.passkey[data-disc][data-phase="settled"] .pk-disc { scale: calc(24 / 28); }
+.passkey[data-disc] .pk-spinner { scale: .62; }
+.passkey[data-disc] .pk-spoke { fill: var(--pk-on-focus); }
+
 @media (prefers-reduced-motion: reduce) {
   /* no pour at all — the loader simply appears — and the mark lands without opening */
   .pk-pour { display: none; }
+  .pk-disc { transition: none !important; }
   .passkey[data-verdicts][data-fail="mark"] .pk-bang-glyph,
   .passkey[data-verdicts][data-fail="mark"] .pk-bang-stem,
   .passkey[data-verdicts][data-fail="mark"] .pk-bang-dot { transition: none; }

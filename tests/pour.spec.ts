@@ -48,4 +48,15 @@ test.describe("liquid pour", () => {
     await g.press("Enter");
     await expect(label(g)).toHaveText("Not verified", VERDICT);
   });
+
+  test("the filled-circle version pours into a green disc that takes the tick", async ({ page }) => {
+    const f = await Field.open(page, "?v=14");
+    await f.type(Field.GOOD);
+    await f.sendBox.click();
+    await expect(f.root).toHaveAttribute("data-pour", "land");
+    const disc = page.locator(".pk-disc");
+    await expect.poll(() => disc.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+    await expect.poll(() => f.state(), VERDICT).toBe("success");
+    await expect(disc).toBeVisible();
+  });
 });
