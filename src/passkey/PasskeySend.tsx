@@ -54,6 +54,12 @@ export const SEND_OUT_MS = 234;
  * grows into the action instead of the action being placed beside it. With this in play the
  * code is not submitted automatically — a mistyped digit stays fixable until it is pressed.
  */
+/** the bridge's waist, and how far each end flares above and below it: 16 + 2 × 14 is
+ *  44, the caret block's height, so at the strip it is the block coming out of it and at
+ *  the box it is the block going into it */
+const PLUG_WAIST = 16;
+const PLUG_R = 14;
+
 export function PasskeySend({ passkey, falls = false, fluid = false, smooth = false,
   clears = false, handsBack = false, staleOnResend = false }: {
   passkey: Passkey; falls?: boolean; fluid?: boolean; smooth?: boolean;
@@ -138,6 +144,9 @@ export function PasskeySend({ passkey, falls = false, fluid = false, smooth = fa
     const heldTranslate = style.translate;
     const heldScale = style.scale;
     running.forEach((a) => a.cancel());
+    // the bridge's animations fill both ways too, and a new one would stack on the last
+    plug.current?.getAnimations().forEach((a) => a.cancel());
+    const gap = parseFloat(style.getPropertyValue("--pk-send-gap")) || 16;
 
     /*
      * translate and scale rather than transform, deliberately — transform belongs to the
@@ -183,20 +192,16 @@ export function PasskeySend({ passkey, falls = false, fluid = false, smooth = fa
           { duration: ms, delay: entry === "paste" ? PASTE_FADE_MS : 0,
             easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
         );
-        // The block pushing the box out, carried on through the gap at its own 44px and
-        // square front. Its width IS the progress, so its end stays on the box's edge as the
-        // gap opens; it holds full height until the neck has thinned behind it, then drops
-        // away and leaves the liquid to snap on its own.
-        // Width and height rather than scale, so the concave fillets at its far end keep
-        // their curve instead of being squeezed flat along with it.
-        const gap = parseFloat(style.getPropertyValue("--pk-send-gap")) || 16;
-        plug.current?.animate(
-          leaving
-            ? [{ width: "0px", opacity: 0 }, { width: "0px", opacity: 0 }]
-            : [{ width: "0px", height: "44px", "--pk-plug-r": "10px", opacity: 1 },
-               { width: `${gap * 0.75}px`, height: "44px", "--pk-plug-r": "10px", opacity: 1, offset: 0.75 },
-               { width: `${gap * 0.9}px`, height: "0px", "--pk-plug-r": "0px", opacity: 1, offset: 0.9 },
-               { width: `${gap}px`, height: "0px", "--pk-plug-r": "0px", opacity: 1 }],
+        // The bridge: a funnel from the block into the box — full height at the strip's
+        // face, pinched in the middle, full height again at the box's. Its width IS the
+        // progress, so its far end stays on the box's edge as the gap opens; it holds its
+        // shape until the neck has thinned behind it, then pinches off. Sizes rather than
+        // scale, so the curves keep their shape instead of being squeezed with the bar.
+        if (!leaving) plug.current?.animate(
+          [{ width: "0px", height: `${PLUG_WAIST}px`, "--pk-plug-r": `${PLUG_R}px` },
+           { width: `${gap * 0.75}px`, height: `${PLUG_WAIST}px`, "--pk-plug-r": `${PLUG_R}px`, offset: 0.75 },
+           { width: `${gap * 0.9}px`, height: "0px", "--pk-plug-r": "0px", offset: 0.9 },
+           { width: `${gap}px`, height: "0px", "--pk-plug-r": "0px" }],
           { duration: ms, delay: entry === "paste" ? PASTE_FADE_MS : 0,
             easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
         );
@@ -293,6 +298,17 @@ export function PasskeySend({ passkey, falls = false, fluid = false, smooth = fa
         [{ scale: "1 0" }, { scale: ".55 .42", offset: 0.45 }, { scale: "0 .8" }],
         { duration: SEND_OUT_MS, delay: ARROW_OUT_MS, fill: "both" },
       );
+      // The same funnel, backwards: it forms as the box starts back, and its width is
+      // the gap closing — the same keyframes and curve as the box's own return, as a
+      // separate animation so that nothing in between bends it off the box's edge.
+      const back = { duration: SEND_OUT_MS, delay: ARROW_OUT_MS, fill: "both" } as const;
+      if (smooth) plug.current?.animate(
+        [{ width: `${gap}px`, easing: "cubic-bezier(0.55, 0, 0.85, 0.35)" },
+         { width: "0px", offset: 0.45 }, { width: "0px" }], back);
+      if (smooth) plug.current?.animate(
+        [{ height: "0px", "--pk-plug-r": "0px" },
+         { height: `${PLUG_WAIST}px`, "--pk-plug-r": `${PLUG_R}px`, offset: 0.2 },
+         { height: `${PLUG_WAIST}px`, "--pk-plug-r": `${PLUG_R}px` }], back);
 
       play(
         [{ translate: heldTranslate, scale: heldScale, opacity: 1,
