@@ -60,6 +60,10 @@ export const SEND_OUT_MS = 234;
 const PLUG_WAIST = 16;
 const PLUG_R = 14;
 
+/** how long the caret block takes to reach the strip's edge on its way to the box,
+ *  measured: the box waits for it, because it is the block that pushes it out */
+const BLOCK_REACH_MS = 80;
+
 export function PasskeySend({ passkey, falls = false, fluid = false, smooth = false,
   clears = false, handsBack = false, staleOnResend = false }: {
   passkey: Passkey; falls?: boolean; fluid?: boolean; smooth?: boolean;
@@ -185,7 +189,10 @@ export function PasskeySend({ passkey, falls = false, fluid = false, smooth = fa
         // a pair where both are the system answering
         const opened = parseFloat(style.getPropertyValue("--pk-smooth-ms")) || SMOOTH_MS;
         const ms = leaving ? SEND_OUT_MS : opened;
-        el.style.setProperty("--pk-arrow-delay", `${(entry === "paste" ? PASTE_FADE_MS : 0) + ms}ms`);
+        // The box does not move until the block that pushes it has reached the strip's edge:
+        // opening any sooner, it was out and waiting before anything had touched it.
+        const lead = (entry === "paste" ? PASTE_FADE_MS : 0) + BLOCK_REACH_MS;
+        el.style.setProperty("--pk-arrow-delay", `${lead + ms}ms`);
         // no blurred neck here: its bulge made the box's end of the bridge bigger than the
         // block's, and the bridge below is the whole of the join, crisp at both ends
         // The bridge: a funnel from the block into the box — full height at the strip's
@@ -197,16 +204,16 @@ export function PasskeySend({ passkey, falls = false, fluid = false, smooth = fa
           const [W, R] = [PLUG_WAIST, PLUG_R];
           plug.current?.animate(
             [// The block's height at both faces, and held there for as long as the block is
-             // still pushing: it reaches the strip's edge ~60ms in and has gone into it by
-             // ~200ms, which is 0.89 of the eased progress. Shrinking the block's end any
+             // still pushing: the box starts as the block reaches the strip's edge, and the block
+             // has gone into it ~130ms later, which is 0.72 of the eased progress. Shrinking the block's end any
              // earlier left the block bigger than what it was pushing into.
              { width: "0px", height: `${W}px`, "--pk-plug-rl": `${R}px`, "--pk-plug-rr": `${R}px` },
-             { width: `${gap * 0.89}px`, height: `${W}px`, "--pk-plug-rl": `${R}px`, "--pk-plug-rr": `${R}px`, offset: 0.89 },
+             { width: `${gap * 0.72}px`, height: `${W}px`, "--pk-plug-rl": `${R}px`, "--pk-plug-rr": `${R}px`, offset: 0.72 },
              // then it lets go of the block — a quick break at the block's end —
-             { width: `${gap * 0.93}px`, height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": `${R}px`, offset: 0.93 },
+             { width: `${gap * 0.8}px`, height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": `${R}px`, offset: 0.8 },
              // and the box takes in what it was carrying
              { width: `${gap}px`, height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": "0px" }],
-            { duration: ms, delay: entry === "paste" ? PASTE_FADE_MS : 0,
+            { duration: ms, delay: lead,
               easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
           );
         }
@@ -216,7 +223,7 @@ export function PasskeySend({ passkey, falls = false, fluid = false, smooth = fa
                { translate: shut, scale: "0 1", opacity: 1 }]
             : [{ translate: shut, scale: "0 1", opacity: 1 },
                { translate: "0 0", scale: "1 1", opacity: 1 }],
-          { duration: ms, delay: entry === "paste" ? PASTE_FADE_MS : 0,
+          { duration: ms, delay: lead,
             easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
         );
         return;
