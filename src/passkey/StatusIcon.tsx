@@ -99,9 +99,6 @@ export function StatusIcon({ status, origin = false, filled = false, fail = null
 
   return (
     <span className="pk-icon">
-      {/* the disc a poured drop lands as, under the spokes — only drawn where the field
-          asks for it (data-disc); everywhere else it stays at opacity 0 */}
-      <span className="pk-disc" aria-hidden="true" />
       <svg className="pk-spinner" viewBox="0 0 26 26" width="26" height="26" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         {SPOKES.map((s, i) => (
           <rect
