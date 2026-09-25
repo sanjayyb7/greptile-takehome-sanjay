@@ -255,36 +255,21 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     if (autoSubmit && next.every(Boolean)) submit();
   }, [autoSubmit, busy, edited, focusAt, length, setAll, stamp, submit]);
 
-  /* Holding Backspace is our own run, not the OS key repeat. The OS waits out its
-     initial repeat delay — around half a second — after the first deletion, which put a
-     stall between the last digit and the rest; with a full code that reads as the erase
-     stopping dead the moment the send box leaves. LEAD_MS is long enough that a single
-     tap still deletes exactly one digit, and matches the send box's exit so the run picks
-     up just as the box finishes going. */
   /*
-   * How long the key has to be down before this stops being a press and starts being a
-   * hold.
+   * Holding a key is our own run, not the OS key repeat.
    *
-   * 130ms was shorter than a deliberate press, so a single Backspace took two digits with
-   * it — the run had already started by the time the key came up. 320 fixed that for a
-   * quick press and not for a slow one: measured, a press held 350ms still cleared two,
-   * and an unhurried press is easily that long. 500 is past anything anybody does by
-   * accident and still reads as a hold rather than a wait.
+   * The OS types once, waits out its initial repeat delay — around half a second — and then
+   * repeats every 30ms or so: a stall after the first cell and then all the rest at once.
+   * The run replaces it with one even pace, and that pace is the caret's own crossing: each
+   * next step lands just as the block finishes arriving in its cell, so filling or emptying
+   * the field is one continuous sweep. It is the same both ways — hold a digit and the code
+   * fills a cell at a time, hold Backspace and it empties a cell at a time.
+   *
+   * It used to wait 500ms before the second step, so that a slow press could not take two.
+   * That was the stall people saw: one cell, a stop, then the rest. 300 is still longer
+   * than a press — a tap is one digit, typed or deleted.
    */
-  const ERASE_LEAD_MS = 500;
-  /** and then the run's own cadence, which is not the lead: the wait to begin and the
-   *  pace once going are different questions */
-  const ERASE_STEP_MS = 240;
-  const ERASE_MIN_MS = 110;
-  const ERASE_RAMP_MS = 30;      // each step is this much quicker than the one before
-  /**
-   * A held digit fills at one even pace, and that pace is the caret's own crossing: each
-   * next digit lands just as the block finishes arriving in its cell, so the fill is one
-   * continuous sweep. With the erase's 500ms lead it went a cell, stopped, and then ran —
-   * the first step waited out the lead while the block had long since arrived. 300 is
-   * still longer than a press: a tap types one digit.
-   */
-  const TYPE_STEP_MS = 300;
+  const HOLD_STEP_MS = 300;
   const erasing = useRef<number[]>([]);
   /** how long until the next step, or null when no key is being held. The caret reads it
    *  so its travel can keep pace with the run instead of being cut off part-way across. */
@@ -349,30 +334,19 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     return !latest.current.every(Boolean);
   }, [length, write]);
 
-  /* One run, either direction. Both are ours rather than the OS repeat, for the same
-     reason and at the same cadence: hold a digit and the code fills a cell at a time,
-     hold Backspace and it empties a cell at a time, and the two take the same length of
-     time to cross the field. The OS rate is neither — about 30ms between repeats after a
-     half-second stall, which filled all four cells in a tenth of a second and left the
-     last one apparently arriving late because it was the only one anybody could see. */
-  const holdRun = useCallback((code: string, first: () => boolean, even = false) => {
+  /* One run, either direction, at one pace: see HOLD_STEP_MS. */
+  const holdRun = useCallback((code: string, first: () => boolean) => {
     runKey.current = code;
     window.addEventListener("keyup", endRun.current);
     window.addEventListener("blur", stopRun.current);
-    // each step a little quicker than the last, down to a floor: a flat interval after a
-    // longer lead-in leaves the first gap twice the rest, which still reads as a catch
-    const step = (gap: number, lead = false) => {
+    const step = () => {
       erasing.current.push(window.setTimeout(() => {
-        const next = even ? TYPE_STEP_MS
-          : lead ? ERASE_STEP_MS : Math.max(ERASE_MIN_MS, gap - ERASE_RAMP_MS);
-        erasePace.current = next;        // set before the step, which is what reads it
+        erasePace.current = HOLD_STEP_MS;   // set before the step, which is what reads it
         if (!first()) return stopErasing();
-        step(next);
-      }, gap));
+        step();
+      }, HOLD_STEP_MS));
     };
-    // the pace is declared by the run itself, so a single press still gets a full,
-    // unhurried caret travel
-    step(even ? TYPE_STEP_MS : ERASE_LEAD_MS, true);
+    step();
   }, [stopErasing]);
 
   useEffect(() => stopErasing, [stopErasing]);
@@ -394,7 +368,7 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
       if (i < length - 1) focusedRef.current = i + 1;
       if (latest.current.every(Boolean)) return;   // that filled it; there is no run to start
       const digit = e.key;
-      holdRun(e.code, () => typeStep(digit), true);
+      holdRun(e.code, () => typeStep(digit));
       return;
     }
     if (e.key === "Backspace" || e.key === "Delete") {
