@@ -139,10 +139,16 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
       // square front. Its width IS the progress, so its end stays on the box's edge as the
       // gap opens; it holds full height until the neck has thinned behind it, then drops
       // away and leaves the liquid to snap on its own.
+      // Width and height rather than scale, so the concave fillets at its far end keep
+      // their curve instead of being squeezed flat along with it.
+      const gap = parseFloat(style.getPropertyValue("--pk-send-gap")) || 16;
       plug.current?.animate(
         leaving
-          ? [{ scale: "0 0" }, { scale: "0 0" }]
-          : [{ scale: "0 1" }, { scale: ".75 1", offset: 0.75 }, { scale: ".9 0", offset: 0.9 }, { scale: "1 0" }],
+          ? [{ width: "0px", opacity: 0 }, { width: "0px", opacity: 0 }]
+          : [{ width: "0px", height: "44px", "--pk-plug-r": "10px", opacity: 1 },
+             { width: `${gap * 0.75}px`, height: "44px", "--pk-plug-r": "10px", opacity: 1, offset: 0.75 },
+             { width: `${gap * 0.9}px`, height: "0px", "--pk-plug-r": "0px", opacity: 1, offset: 0.9 },
+             { width: `${gap}px`, height: "0px", "--pk-plug-r": "0px", opacity: 1 }],
         { duration: ms, delay: entry === "paste" ? PASTE_FADE_MS : 0,
           easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
       );

@@ -60,10 +60,22 @@
    crisp, at the block's own 44px and with its square front, spanning from the strip's
    edge to the box's; the neck underneath still curves into the box and snaps. Closed
    (scale 0) everywhere it is not animated open. */
+/* registered so it can be animated: the curve shrinks with the bar as it lets go */
+@property --pk-plug-r { syntax: "<length>"; inherits: true; initial-value: 10px; }
 .pk-goo-plug { position: absolute; left: 100%; top: 50%; z-index: 1; pointer-events: none;
-  width: var(--pk-send-gap); height: 44px; margin-top: -22px;
-  background: var(--pk-focus); border-radius: 0 1px 1px 0;
-  transform-origin: left center; scale: 0 0; }
+  width: 0; height: 44px; translate: 0 -50%; opacity: 0;
+  background: var(--pk-focus); --pk-plug-r: 10px; }
+/* Where it meets the box it flares, a concave curve above and below, so the box reads as
+   swelling out of the block rather than a bar being butted against it. Each fillet is the
+   corner between the bar's edge and the box's face with a quarter circle taken out of it;
+   no wider than the bar, so while the gap is narrower than the curve it never reaches back
+   over the strip's border. */
+.pk-goo-plug::before, .pk-goo-plug::after { content: ""; position: absolute; right: 0;
+  width: min(var(--pk-plug-r), 100%); height: var(--pk-plug-r); }
+.pk-goo-plug::before { bottom: 100%;
+  background: radial-gradient(circle var(--pk-plug-r) at 0 0, transparent 99%, var(--pk-focus) 100%); }
+.pk-goo-plug::after { top: 100%;
+  background: radial-gradient(circle var(--pk-plug-r) at 0 100%, transparent 99%, var(--pk-focus) 100%); }
 
 /* the box keeps its own green and its own corners, and sits over the goo rather than in
    it — the liquid is only what runs between it and the strip */
