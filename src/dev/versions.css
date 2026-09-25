@@ -4,7 +4,8 @@
 
    It declares the two tokens it borrows from the field rather than reading them off the
    field's scope, so the two files stay independent of each other's load order. */
-.pk-versions { --pk-focus: #107a4d;
+.pk-versions { --pk-v-slot: 30px;   /* one dot's width, and the track's height less padding */
+  --pk-focus: #107a4d;
   --sw-track: #ececec;      /* the pill the dots sit in */
   --sw-dot: #9a9a9a;        /* a version not being shown */
   --sw-dot-hover: #6b6b6b;
@@ -32,7 +33,7 @@
 /* the row the track sits in. Only as wide as the track, so the track stays the centre of
    the page and anything beside it hangs off the edge. */
 .pk-versions-row { position: relative; display: flex; }
-.pk-versions-track { --pk-v-slot: 30px;
+.pk-versions-track {
   position: relative; display: flex; align-items: center; padding: 4px;
   background: var(--sw-track); border-radius: 999px; }
 /* the disc that marks the one being shown. A single element on a transform rather than a

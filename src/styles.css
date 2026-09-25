@@ -37,8 +37,12 @@ body { margin: 0; background: var(--page); --page: #fff;
    track nothing. */
 .theme-toggle { position: absolute; left: 100%; margin-left: 10px;
   top: 50%; translate: 0 -50%;
-  width: 36px; height: 36px; display: grid; place-items: center;
-  padding: 0; border: 1px solid var(--pk-line, #e4e4e4); border-radius: 10px;
+  /* the track's own height, read off the same variable the dots are sized from: one slot
+     plus the 4px of padding either side. Round, because it is one control beside a row of
+     round ones and a rounded square among circles is neither. */
+  width: calc(var(--pk-v-slot, 30px) + 8px); height: calc(var(--pk-v-slot, 30px) + 8px);
+  display: grid; place-items: center;
+  padding: 0; border: 1px solid var(--pk-line, #e4e4e4); border-radius: 50%;
   background: none; color: #858585; cursor: pointer;
   transition: color 160ms ease, border-color 160ms ease; }
 .theme-toggle:focus-visible { outline: 2px solid #107a4d; outline-offset: 2px; }
