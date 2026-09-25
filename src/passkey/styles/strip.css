@@ -126,7 +126,7 @@
   border-radius: 1px; background: var(--pk-focus);
   /* --pk-wipe-ms is the time until the next move when that is sooner, so a held erase
      plays a run of complete wipes rather than a run of interrupted ones */
-  animation: pk-caret-wipe var(--pk-wipe-ms, var(--pk-caret-ms)) var(--pk-write-ease, ease-in-out)
+  animation: pk-caret-wipe var(--pk-wipe-ms, var(--pk-caret-ms)) ease-in-out
               var(--pk-wipe-delay, 0ms) both; }
 .pk-caret-wipe[data-back] > i { animation-name: pk-caret-wipe-back; }
 /* Pasted, there is no caret in the last cell — the digits simply appeared — so a sliver
