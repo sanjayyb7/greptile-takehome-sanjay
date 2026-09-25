@@ -121,9 +121,23 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     });
   }, []);
 
+  /**
+   * Which verification is the current one. Every check is numbered when it starts, and
+   * only the latest may change anything when it answers: a reset, a newer attempt or the
+   * field going away each move the number on, so a response that comes back after one of
+   * those finds itself outdated and is dropped — no status, no message, no onSuccess.
+   */
+  const attempt = useRef(0);
+  useEffect(() => {
+    const current = attempt;
+    return () => { current.current += 1; };          // unmounted: nothing left to answer to
+  }, []);
+
   const reset = useCallback(() => {
+    attempt.current += 1;                            // whatever is still being checked is moot
     setAll(Array(length).fill(""));
     setStatus("idle");
+    setProblem(null);                                // the feedback was about that code
     setStale(false);
     focusAt(0);
   }, [focusAt, length, setAll]);
@@ -149,10 +163,12 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     // and "Couldn't verify your code" below it, at the same time, about the same digits.
     setProblem(null);
     setStatus("verifying");
+    const mine = ++attempt.current;
     let ok: boolean;
     try {
       ok = await onVerify(code);
     } catch {
+      if (mine !== attempt.current) return;         // reset, superseded or unmounted
       // The check never returned a verdict. The digits are left exactly as they are and
       // the field goes back to idle rather than to error: there is nothing wrong with
       // this code as far as anybody knows, and the next press should be an ordinary
@@ -163,6 +179,7 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
       if (handsBackOnError) focusAt(length - 1);
       return;
     }
+    if (mine !== attempt.current) return;           // reset, superseded or unmounted
     if (ok) {
       setStatus("success");
       onSuccess?.(code);
@@ -353,7 +370,9 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
 
   const onKeyDown = useCallback((i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") { e.preventDefault(); submit(); return; }
-    if (busy) { e.preventDefault(); return; }
+    // nothing is edited while the code is being checked — but Tab still moves focus on,
+    // so the keyboard is never held in the field for the length of the wait
+    if (busy) { if (e.key !== "Tab") e.preventDefault(); return; }
     const typed = e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey;
     if (typed) {
       // handled here, not via onChange: React suppresses change events when a cell is
