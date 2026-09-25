@@ -32,7 +32,7 @@ npx playwright install chromium   # once
 npm test
 ```
 
-Forty-two tests in a real browser, in four files:
+Fifty tests in a real browser, in five files:
 
 - **`tests/rules.spec.ts`** — the brief's rules, one test each.
   Digits only, paste filtered, focus advancing, both Backspace behaviours, hold-to-clear,
@@ -46,6 +46,13 @@ Forty-two tests in a real browser, in four files:
   the accessibility tree once authenticated, one-time-code autofill and mobile keyboard
   deletion work, everything fits and works at 320px and 375px, and under reduced motion
   nothing moves through a whole attempt.
+- **`tests/lifecycle.spec.ts`** — what happens around a verification. A reset, a newer
+  attempt or an unmount while a check is still out leaves the late answer with nothing to
+  change; `onSuccessAnimationComplete` fires once, after the row has moved down (and at
+  once under reduced motion); the send box turns round from where it is when the last
+  digit is retyped; Tab works during the wait while edits and resubmits do not. These run
+  on `harness.html`, a page the dev server serves for the tests, where each check waits to
+  be answered by the test itself. It is never built.
 
 Playwright rather than jsdom, because jsdom has no modal `<dialog>`, no `element.animate`
 and no real focus — and all three of those are where the bugs were. Testing a polyfilled
@@ -97,7 +104,8 @@ for a path this build never takes.
 | --- | --- | --- |
 | **The component** | `src/passkey/` | 14 files. The field itself. Nothing in it knows about the page, and nothing outside it is needed to use it. |
 | **The page** | `src/main.tsx`, `src/styles.css` | 2 files. What renders the field. Neither ships with the component. |
-| **The tests** | `tests/`, `playwright.config.ts` | 5 files. 42 tests in a real browser. |
+| **The test page** | `harness.html`, `src/harness.tsx` | 2 files. The field with checks the tests answer by hand. Served in development, never built. |
+| **The tests** | `tests/`, `playwright.config.ts` | 6 files. 50 tests in a real browser. |
 | **The scaffolding** | `package.json`, `tsconfig*.json`, `vite.config.ts`, `index.html`, `.gitignore` | What Vite and TypeScript need. `npm run build` typechecks all three projects — the app, the Vite config, and the tests — so a type error in a spec fails the build rather than waiting for someone to run it. |
 
 ```
@@ -125,6 +133,7 @@ src/passkey/                 the component — nothing in here knows about the p
 
 src/main.tsx                 the page that renders it
 src/styles.css               and centres it
+src/harness.tsx              the tests' page — checks answered by hand (harness.html)
 ```
 
 The stylesheet was one file of a thousand lines. Split, each part is the size of the thing
@@ -166,7 +175,10 @@ function SignIn() {
       resendCooldown={60}             // seconds before another can be asked for
       length={6}                      // cells; the strip and the copy both follow it
 
-      onSuccess={(code) => router.push("/dashboard")}
+      // Leave once the authenticated animation has finished — the mark drawn and the row
+      // moved down into the cells' place. onSuccess fires as soon as the code is accepted,
+      // which is too early to navigate from: the page would change mid-animation.
+      onSuccessAnimationComplete={() => router.push("/dashboard")}
     />
   );
 }
