@@ -32,11 +32,14 @@ test.describe("the rules", () => {
   test("a partial paste lands where the caret is", async ({ page }) => {
     // it used to be written from the first cell whatever was selected, and to clear
     // everything it did not cover — the caret was saying where to put them, and was
-    // being ignored
+    // being ignored.
+    // The caret is put on a filled cell here, not an empty one beyond the gap: an empty
+    // cell with an empty cell before it is not somewhere the caret will go at all.
     const f = await Field.open(page, "");
+    await f.type("1234");
     await f.cells.nth(1).click();
-    await f.paste("567");
-    expect(await f.code()).toBe("_567");
+    await f.paste("99");
+    expect(await f.code()).toBe("1994");
     expect(await f.focusedCell()).toBe(3);
   });
 
@@ -47,6 +50,22 @@ test.describe("the rules", () => {
     await f.cells.nth(2).click();
     await f.paste("1234");
     expect(await f.code()).toBe("1234");
+  });
+
+  test("clicking an empty cell lands on the first gap, not where you clicked", async ({ page }) => {
+    // clicking cell four of an empty code used to put the caret there, and the next
+    // keystroke made a code with a hole in it — from a press that could only have meant
+    // "let me start"
+    const f = await Field.open(page);
+    await f.cells.nth(3).click();
+    expect(await f.focusedCell()).toBe(0);
+    await f.type("12");
+    await f.cells.nth(3).click();          // still ahead of the gap
+    expect(await f.focusedCell()).toBe(2);
+    await f.cells.nth(0).click();          // but a filled cell is a correction, so allowed
+    expect(await f.focusedCell()).toBe(0);
+    await f.type("9");
+    expect(await f.code()).toBe("92__");
   });
 
   test("typing advances to the next cell", async ({ page }) => {

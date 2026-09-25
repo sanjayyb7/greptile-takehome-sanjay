@@ -443,12 +443,28 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     if (autoSubmit && next.every(Boolean)) submit();
   }, [autoSubmit, busy, edited, focusAt, length, setAll, stamp, submit]);
 
+  /**
+   * Focus lands where there is something to do.
+   *
+   * Clicking the fourth cell of an empty code put the caret there, and the next keystroke
+   * filled cell four — a code with a hole in it, from a press that could only have meant
+   * "let me start". An empty cell with an empty cell before it is not somewhere to type,
+   * so the press is taken as a request to begin and lands on the first gap instead.
+   *
+   * A cell that HAS a digit is always clickable, because that is a correction and the
+   * person is pointing at the digit they want to change. Only the empty ones are steered.
+   */
   const onFocus = useCallback((i: number, e: React.FocusEvent<HTMLInputElement>) => {
+    const entered = latest.current;
+    if (!entered[i]) {
+      const gap = entered.findIndex((d) => !d);
+      if (gap !== -1 && gap < i) { focusAt(gap); return; }
+    }
     focusedRef.current = i;
     setFocused(i);
     setPicked(true);
     e.target.select();
-  }, []);
+  }, [focusAt]);
 
   /** Clicking the cell that already has focus fires no focus event, and it is still a
    *  choice — so the press counts as one on its own. */

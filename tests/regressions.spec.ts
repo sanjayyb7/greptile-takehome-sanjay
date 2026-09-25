@@ -28,9 +28,9 @@ test.describe("regressions", () => {
     // cells take a digit, and the control opens a third time
     await f.dialogCancel.click();
     await expect.poll(() => f.dialogOpen()).toBe(false);
-    await f.cells.nth(1).click();
+    await f.cells.nth(0).click();
     await f.type("7");
-    expect(await f.code()).toBe("_7__");
+    expect(await f.code()).toBe("7___");
     await f.resendLink.click();
     await expect.poll(() => f.dialogOpen()).toBe(true);
   });
