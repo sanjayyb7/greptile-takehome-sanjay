@@ -28,7 +28,7 @@ export const VERSIONS: { id: Version; name: string; note: string; label?: string
   { id: 2, name: "Version 2", note: "Send box set apart in its own container; digits rise into place" },
   { id: 4, name: "Version 4", note: "Send box arrives attached, then is shoved clear — the push opens the gap" },
   { id: 5, name: "Fluid", note: "The box separates from the strip like liquid — a neck thins and breaks" },
-  { id: 8, name: "Smooth, box clears", note: "The box opens and clears in one move; the press sends it away, and every case is answered out loud" },
+  { id: 8, name: "Smooth, box clears", note: "Not sure how far I could go, but \u201cCheck your email\u201d with the address on top felt right. The box opens and clears in one move" },
   { id: 14, name: "Filled circle", note: "Not sure how far I could go, but \u201cCheck your email\u201d with the address on top felt right. A filled circle and no shadow made it feel much better" },
 ];
 
@@ -259,7 +259,7 @@ const plainProgress = (v: Version) => v === 14;
  * this, and where do I look — and it means the address is on screen before the resend
  * confirmation has to name it rather than only afterwards.
  */
-const intro = (v: Version) => v === 14;
+const intro = (v: Version) => v === 8 || v === 14;
 
 /**
  * The selected cell sits flat in the strip: its ring says it is chosen, with no shadow
