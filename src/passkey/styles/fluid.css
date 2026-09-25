@@ -54,12 +54,23 @@
   background: var(--pk-focus); transform-origin: left center;
   scale: 0 1; translate: calc(-1 * var(--pk-send-gap)) 0; }
 
+/* The caret block, carried on through the gap. The block is what pushes the box out, but
+   the neck is blurred, and a blur rounds anything short into a point — so what came out
+   of the strip was a small rounded nub, not the block. This is drawn outside the filter,
+   crisp, at the block's own 44px and with its square front, spanning from the strip's
+   edge to the box's; the neck underneath still curves into the box and snaps. Closed
+   (scale 0) everywhere it is not animated open. */
+.pk-goo-plug { position: absolute; left: 100%; top: 50%; z-index: 1; pointer-events: none;
+  width: var(--pk-send-gap); height: 44px; margin-top: -22px;
+  background: var(--pk-focus); border-radius: 0 1px 1px 0;
+  transform-origin: left center; scale: 0 0; }
+
 /* the box keeps its own green and its own corners, and sits over the goo rather than in
    it — the liquid is only what runs between it and the strip */
 .pk-send { z-index: 2; }
 
 @media (prefers-reduced-motion: reduce) {
   /* no parting to watch, so no neck to draw */
-  .pk-goo { display: none; }
+  .pk-goo, .pk-goo-plug { display: none; }
 }
 

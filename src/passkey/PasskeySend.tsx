@@ -39,6 +39,8 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
   const blob = useRef<HTMLSpanElement>(null);
   /** and the stub it is leaving, which is drawn back in once the neck has snapped */
   const root = useRef<HTMLSpanElement>(null);
+  /** the caret block's continuation, drawn crisp over the neck — see .pk-goo-plug */
+  const plug = useRef<HTMLSpanElement>(null);
   const checking = status === "verifying" || status === "success";
   // Pressed is as good as emptied, for a box that does not wait out the check: the exit is
   // the one it already has, so backspacing a complete code and submitting one leave the
@@ -133,6 +135,17 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
         { duration: ms, delay: entry === "paste" ? PASTE_FADE_MS : 0,
           easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
       );
+      // The block pushing the box out, carried on through the gap at its own 44px and
+      // square front. Its width IS the progress, so its end stays on the box's edge as the
+      // gap opens; it holds full height until the neck has thinned behind it, then drops
+      // away and leaves the liquid to snap on its own.
+      plug.current?.animate(
+        leaving
+          ? [{ scale: "0 0" }, { scale: "0 0" }]
+          : [{ scale: "0 1" }, { scale: ".75 1", offset: 0.75 }, { scale: ".9 0", offset: 0.9 }, { scale: "1 0" }],
+        { duration: ms, delay: entry === "paste" ? PASTE_FADE_MS : 0,
+          easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
+      );
       play(
         leaving
           ? [{ translate: heldTranslate, scale: heldScale, opacity: 1 },
@@ -195,10 +208,13 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
       {(
         // the root stays behind at the strip's edge; the blob is the box's green, and the
         // neck between them is the filter's doing, not a shape anyone drew
-        <span className="pk-goo" aria-hidden="true">
-          <span className="pk-goo-root" ref={root} />
-          <span className="pk-goo-blob" ref={blob} />
-        </span>
+        <>
+          <span className="pk-goo" aria-hidden="true">
+            <span className="pk-goo-root" ref={root} />
+            <span className="pk-goo-blob" ref={blob} />
+          </span>
+          <span className="pk-goo-plug" ref={plug} aria-hidden="true" />
+        </>
       )}
       <button type="button" ref={box} className="pk-send" onClick={() => submit()} aria-label="Send passcode"
       disabled={busy || leaving} data-busy={busy || undefined} data-leaving={leaving || undefined}>
