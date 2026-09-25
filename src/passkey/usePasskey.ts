@@ -38,8 +38,15 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
    * be pointed at something real without being edited.
    */
   onVerify?: (code: string) => Promise<boolean>;
-  /** Ask for a new code. The default is the stand-in; a real one goes here. */
-  onResend?: () => Promise<void>;
+  /**
+    * Ask for a new code. The default is the stand-in; a real one goes here.
+    *
+    * Whatever it resolves to is ignored — only settling matters, and rejecting is how it
+    * says the send failed. Typed as unknown rather than void so a bare `() => fetch(...)`
+    * is accepted: requiring void would make every caller wrap a one-line call to say
+    * nothing.
+    */
+  onResend?: () => Promise<unknown>;
   /** and how long before another can be asked for, in seconds */
   resendCooldown?: number;
   /** submit as soon as the last cell is filled; Enter always submits regardless */
@@ -153,7 +160,7 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
       setShake((n) => n + 1);
       setProblem("offline");
       setStatus("idle");
-      if (handsBackOnError) { clearing.current = true; focusAt(length - 1); }
+      if (handsBackOnError) focusAt(length - 1);
       return;
     }
     if (ok) {
@@ -169,7 +176,7 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     // and where the caret lands is ours: the press moved it to the button, and the button
     // is about to go, so it has to be given somewhere to be. The last cell is the one a
     // Backspace would take first.
-    if (handsBackOnError) { clearing.current = true; focusAt(length - 1); }
+    if (handsBackOnError) focusAt(length - 1);
   }, [busy, focusAt, handsBackOnError, length, onSuccess, onVerify]);
 
   // the resend cooldown ticks whenever one is running
@@ -230,7 +237,6 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     setStatus((s) => (s === "error" ? "idle" : s));   // the rejection was about the old code
     setProblem(null);                                 // and so was the message
     setStale(false);                                  // the digits are theirs again
-    clearing.current = false;                         // Backspace goes back to correcting
   }, []);
 
   const write = useCallback((i: number, raw: string) => {
@@ -271,23 +277,20 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
   const ERASE_STEP_MS = 240;
   const ERASE_MIN_MS = 110;
   const ERASE_RAMP_MS = 30;      // each step is this much quicker than the one before
+  /**
+   * A held digit fills at one even pace, and that pace is the caret's own crossing: each
+   * next digit lands just as the block finishes arriving in its cell, so the fill is one
+   * continuous sweep. With the erase's 500ms lead it went a cell, stopped, and then ran —
+   * the first step waited out the lead while the block had long since arrived. 300 is
+   * still longer than a press: a tap types one digit.
+   */
+  const TYPE_STEP_MS = 300;
   const erasing = useRef<number[]>([]);
   /** how long until the next step, or null when no key is being held. The caret reads it
    *  so its travel can keep pace with the run instead of being cut off part-way across. */
   const erasePace = useRef<number | null>(null);
   /** the key the run belongs to, so the run ends when that key comes up and not another */
   const runKey = useRef<string | null>(null);
-  /**
-   * Whether the code on screen is one to get rid of rather than one to correct.
-   *
-   * Backspace means two different things depending on the answer. On a complete code it
-   * is a correction — clear the cell and stay in it, because the replacement goes where
-   * the old digit was. On a code that has just been refused it is a clearance — clear the
-   * cell and step back, because the next thing wanted is the digit before, not this one
-   * again. Set by a rejection and unset by the first digit typed after it.
-   */
-  const clearing = useRef(false);
-
   const endRun = useRef<(e: KeyboardEvent) => void>(() => {});
   const stopRun = useRef<() => void>(() => {});
 
@@ -324,9 +327,10 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     const back = () => { focusedRef.current = i - 1; focusAt(i - 1); };
     // The caret holds its place on a cell it has just emptied, the way a text field does:
     // what you deleted is where the replacement goes. Only a press on a cell that is
-    // already empty steps back — unless the code is being cleared rather than corrected,
-    // when every press steps back, because nothing here is going to be typed over.
-    if (next[i]) { next[i] = ""; if (clearing.current && i > 0) back(); }
+    // already empty steps back. The same two rules whatever has happened — a refused code
+    // is still a code being corrected, and one that once behaved differently here was a
+    // second mode to learn for no gain.
+    if (next[i]) next[i] = "";
     else if (i > 0) { next[i - 1] = ""; back(); }
     else return false;
     setAll(next);
@@ -351,7 +355,7 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
      time to cross the field. The OS rate is neither — about 30ms between repeats after a
      half-second stall, which filled all four cells in a tenth of a second and left the
      last one apparently arriving late because it was the only one anybody could see. */
-  const holdRun = useCallback((code: string, first: () => boolean) => {
+  const holdRun = useCallback((code: string, first: () => boolean, even = false) => {
     runKey.current = code;
     window.addEventListener("keyup", endRun.current);
     window.addEventListener("blur", stopRun.current);
@@ -359,14 +363,16 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     // longer lead-in leaves the first gap twice the rest, which still reads as a catch
     const step = (gap: number, lead = false) => {
       erasing.current.push(window.setTimeout(() => {
-        const next = lead ? ERASE_STEP_MS : Math.max(ERASE_MIN_MS, gap - ERASE_RAMP_MS);
+        const next = even ? TYPE_STEP_MS
+          : lead ? ERASE_STEP_MS : Math.max(ERASE_MIN_MS, gap - ERASE_RAMP_MS);
         erasePace.current = next;        // set before the step, which is what reads it
         if (!first()) return stopErasing();
         step(next);
       }, gap));
     };
-    step(ERASE_LEAD_MS, true);   // the pace is declared by the run itself, so a single
-                                 // press still gets a full, unhurried caret travel
+    // the pace is declared by the run itself, so a single press still gets a full,
+    // unhurried caret travel
+    step(even ? TYPE_STEP_MS : ERASE_LEAD_MS, true);
   }, [stopErasing]);
 
   useEffect(() => stopErasing, [stopErasing]);
@@ -388,7 +394,7 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
       if (i < length - 1) focusedRef.current = i + 1;
       if (latest.current.every(Boolean)) return;   // that filled it; there is no run to start
       const digit = e.key;
-      holdRun(e.code, () => typeStep(digit));
+      holdRun(e.code, () => typeStep(digit), true);
       return;
     }
     if (e.key === "Backspace" || e.key === "Delete") {
