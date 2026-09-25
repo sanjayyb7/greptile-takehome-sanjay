@@ -317,6 +317,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
       data-guarded={b.guarded ? "" : undefined}
       data-plain={b.plainProgress ? "" : undefined}
       data-pours={b.pours ? "" : undefined}
+      data-flat-focus={b.flatFocus ? "" : undefined}
       data-verdicts={b.verdictInRow ? "" : undefined}
       data-fail={fail ?? undefined}
       data-flashes={flashes ? "" : undefined}
@@ -411,7 +412,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
           {below}
         </p>
       )}
-      <PasskeyResend passkey={passkey} guarded={b.guarded} to={resendTo} />
+      <PasskeyResend passkey={passkey} guarded={b.guarded} confirms={!b.resendsDirectly} to={resendTo} />
       <PasskeyPour enabled={b.pours && send} status={status} rootRef={rootRef} />
     </div>
   );

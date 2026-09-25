@@ -13,6 +13,10 @@
    past the strip's rounded edge and the cell floats above the whole row, not just its
    neighbours. Everything else is the design's own: 3px 107A4D, radius 4, black at 25%,
    blur 4, no spread. */
+/* ...except where the selected cell sits flat — see flatFocus. A refusal's red glow is a
+   more specific rule and still lands. */
+.passkey[data-flat-focus]:not([data-busy]) .pk-strip:not([data-parked]) .pk-cell:focus {
+  box-shadow: none; }
 /* the end cells keep the strip's own 16px corner, so the ring never squares off an end */
 .passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot[data-edge="first"] .pk-cell:focus {
   border-radius: 16px 4px 4px 16px; }

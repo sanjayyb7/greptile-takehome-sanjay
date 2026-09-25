@@ -44,4 +44,20 @@ test.describe("verdict in the row", () => {
     await g.press("Enter");
     await expect(label(g)).toHaveText("Not verified", VERDICT);
   });
+
+  test("Resend sends on the press: no confirmation, then the wait", async ({ page }) => {
+    const f = await Field.open(page, "?v=14");
+    await f.type("111");
+    await f.resendLink.click();
+    await expect(f.dialog).toHaveCount(0);             // nothing to confirm
+    await expect(f.resendLine).toHaveText("Code resent", VERDICT);
+    await expect(f.resendLine).toHaveText(/Resend in 0:\d\d/, VERDICT);
+    expect(await f.code()).toBe("111_");               // what was typed is untouched
+    expect(await f.focusedCell()).toBe(3);             // and the caret is where typing goes
+  });
+
+  test("the selected cell sits flat, with no shadow above it", async ({ page }) => {
+    const f = await Field.open(page, "?v=14");
+    await expect.poll(() => f.cells.first().evaluate((el) => getComputedStyle(el).boxShadow)).toBe("none");
+  });
 });

@@ -33,3 +33,8 @@
 }
 
 /* the strip — one slot per cell; the input carries the box, a layer above carries the glyph */
+
+/* a resend sent straight from the link that did not go: said under the line, in red, with
+   the link above it still there to try again */
+.pk-resend-problem { align-self: center; margin: -8px 0 0; color: var(--pk-bad);
+  font-size: 14px; line-height: 20px; text-align: center; }

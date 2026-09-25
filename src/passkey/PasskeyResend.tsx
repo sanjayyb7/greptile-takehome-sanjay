@@ -18,14 +18,16 @@ const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2,
  * shown rather than held back, because the question after a code is sent is when the next
  * one can be had — being told only on asking means asking to find out.
  */
-export function PasskeyResend({ passkey, guarded = false, to }: {
+export function PasskeyResend({ passkey, guarded = false, confirms = true, to }: {
   passkey: Passkey;
   /** ask before spending a code, and name where it is going — see variants.ts */
   guarded?: boolean;
+  /** guarded, but the press sends straight away: no confirmation, only the answer */
+  confirms?: boolean;
   /** where a new code would go; only shown in the confirmation */
   to?: string;
 }) {
-  if (guarded) return <GuardedResend passkey={passkey} to={to ?? "you@example.com"} />;
+  if (guarded) return <GuardedResend passkey={passkey} to={to ?? "you@example.com"} confirms={confirms} />;
   return <PlainResend passkey={passkey} />;
 }
 
@@ -85,13 +87,24 @@ function PlainResend({ passkey }: { passkey: Passkey }) {
  * press, confirm, "Code resent" for a beat, then the wait as a clock, then the offer
  * again. Nothing about it touches what is typed in the cells.
  */
-function GuardedResend({ passkey, to }: { passkey: Passkey; to: string }) {
+function GuardedResend({ passkey, to, confirms }: { passkey: Passkey; to: string; confirms: boolean }) {
   const { cooldown, resending, resend, clearResendError, status, digits, focusAt } = passkey;
   const [asking, setAsking] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
 
   /* The send went: the dialog's work is done and the line takes over the reporting. */
   useEffect(() => { if (resending === "sent") setAsking(false); }, [resending]);
+
+  /* Sent without asking, the link that had focus is replaced by "Code resent" — so focus
+     is handed to the strip here, the way the dialog's close hands it over when there is
+     one. Only when the press came from the link: a send nobody pressed moves nothing. */
+  const pressed = useRef(false);
+  useEffect(() => {
+    if (confirms || resending !== "sent" || !pressed.current) return;
+    pressed.current = false;
+    const gap = digits.findIndex((d) => !d);
+    focusAt(gap === -1 ? digits.length - 1 : gap);
+  }, [confirms, resending, digits, focusAt]);
 
   /**
    * Where focus goes once the dialog has gone.
@@ -152,12 +165,23 @@ function GuardedResend({ passkey, to }: { passkey: Passkey; to: string }) {
     ) : (
       <p className="pk-resend" key="idle" data-swap>
         Didn't get a code?{" "}
-        <button type="button" ref={trigger} onClick={() => setAsking(true)}>Resend</button>
+        <button type="button" ref={trigger}
+          disabled={resending === "sending"}
+          onClick={() => {
+            if (confirms) { setAsking(true); return; }
+            pressed.current = true;
+            void resend();
+          }}>Resend</button>
       </p>
     );
 
   /* The dialog is a sibling of the line, not a child of it: <p> takes phrasing content
      and <dialog> is flow content, so nesting it is invalid markup. Closed, it is
      display:none and costs the layout nothing. */
-  return <>{line}{dialog}</>;
+  // sent straight from the link, a failure is said on the line itself, with the link
+  // still there to try again
+  const failed = !confirms && resending === "failed" && (
+    <p className="pk-resend-problem" role="alert">Couldn't send the code. Try again.</p>
+  );
+  return <>{line}{confirms ? dialog : failed}</>;
 }

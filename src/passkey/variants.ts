@@ -262,6 +262,20 @@ const plainProgress = (v: Version) => v === 14;
 const intro = (v: Version) => v === 14;
 
 /**
+ * The selected cell sits flat in the strip: its ring says it is chosen, with no shadow
+ * lifting it off the row. The heading above already gives the field a top; a shadow
+ * thrown up at it is one more edge in the space between them.
+ */
+const flatFocus = (v: Version) => v === 14;
+
+/**
+ * Resend sends on the press. The confirmation is for a control that can be hit by
+ * mistake and costs something; here the line itself says what happened — "Code resent",
+ * then the wait — which is the whole of the feedback the press needs.
+ */
+const resendsDirectly = (v: Version) => v === 14;
+
+/**
  * One piece of green carries the whole transaction.
  *
  * The send box is squeezed out of the strip as liquid (that part is eight's), and here
@@ -318,6 +332,8 @@ export type Behaviour = {
   guarded: boolean;
   plainProgress: boolean;
   intro: boolean;
+  flatFocus: boolean;
+  resendsDirectly: boolean;
   pours: boolean;
   verdictInRow: boolean;
 };
@@ -344,6 +360,8 @@ export const behaviourOf = (v: Version): Behaviour => ({
   guarded: guarded(v),
   plainProgress: plainProgress(v),
   intro: intro(v),
+  flatFocus: flatFocus(v),
+  resendsDirectly: resendsDirectly(v),
   pours: pours(v),
   verdictInRow: verdictInRow(v),
 });
