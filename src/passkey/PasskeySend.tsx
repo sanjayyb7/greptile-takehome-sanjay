@@ -148,17 +148,15 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
       if (!leaving) {
         const [W, R] = [PLUG_WAIST, PLUG_R];
         plug.current?.animate(
-          [// the block's height at both faces, held while the block is at the strip's edge.
-           // Offsets are in eased progress: 0.68 is ~120ms in, when the block starts to narrow
-           // into the edge — until then the bridge is the block, carried on.
+          [// The block's height at both faces, and held there for as long as the block is
+           // still pushing: it reaches the strip's edge ~60ms in and has gone into it by
+           // ~200ms, which is 0.89 of the eased progress. Shrinking the block's end any
+           // earlier left the block bigger than what it was pushing into.
            { width: "0px", height: `${W}px`, "--pk-plug-rl": `${R}px`, "--pk-plug-rr": `${R}px` },
-           { width: `${gap * 0.68}px`, height: `${W}px`, "--pk-plug-rl": `${R}px`, "--pk-plug-rr": `${R}px`, offset: 0.68 },
-           // as the block goes into the edge, the block's end drains with it: what leaves the
-           // block is carried forward
-           { width: `${gap * 0.8}px`, height: `${W * 0.7}px`, "--pk-plug-rl": `${R * 0.3}px`, "--pk-plug-rr": `${R}px`, offset: 0.8 },
-           { width: `${gap * 0.89}px`, height: `${W / 3}px`, "--pk-plug-rl": "0px", "--pk-plug-rr": `${R}px`, offset: 0.89 },
-           { width: `${gap * 0.95}px`, height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": `${R / 2}px`, offset: 0.95 },
-           // and the box takes in the last of it
+           { width: `${gap * 0.89}px`, height: `${W}px`, "--pk-plug-rl": `${R}px`, "--pk-plug-rr": `${R}px`, offset: 0.89 },
+           // then it lets go of the block — a quick break at the block's end —
+           { width: `${gap * 0.93}px`, height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": `${R}px`, offset: 0.93 },
+           // and the box takes in what it was carrying
            { width: `${gap}px`, height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": "0px" }],
           { duration: ms, delay: entry === "paste" ? PASTE_FADE_MS : 0,
             easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
