@@ -29,7 +29,7 @@ export const VERSIONS: { id: Version; name: string; note: string; label?: string
   { id: 4, name: "Version 4", note: "Send box arrives attached, then is shoved clear — the push opens the gap" },
   { id: 5, name: "Fluid", note: "The box separates from the strip like liquid — a neck thins and breaks" },
   { id: 8, name: "Smooth, box clears", note: "The box opens and clears in one move; the press sends it away, and every case is answered out loud" },
-  { id: 14, name: "Filled circle", note: "I changed the design you gave a little, to match the animation: a filled round mark instead of the outlined square, and no ellipsis on the wait" },
+  { id: 14, name: "Filled circle", note: "Says where the code went before asking for it back. I changed the mark you gave to a filled circle to match the loader, and dropped the ellipsis" },
 ];
 
 /*
@@ -252,6 +252,16 @@ const guarded = (v: Version) => v === 8 || v === 14;
 const plainProgress = (v: Version) => v === 14;
 
 /**
+ * The field says where the code went before asking for it back.
+ *
+ * Four cells on an empty screen assume you already know what they are for. A line above
+ * them naming the inbox answers the two questions people actually arrive with — what is
+ * this, and where do I look — and it means the address is on screen before the resend
+ * confirmation has to name it rather than only afterwards.
+ */
+const intro = (v: Version) => v === 14;
+
+/**
  * Everything that differs between the explorations, gathered into one value.
  *
  * The predicates above are how each trait is decided; this is how the field asks. Without
@@ -285,6 +295,7 @@ export type Behaviour = {
   filledMark: boolean;
   guarded: boolean;
   plainProgress: boolean;
+  intro: boolean;
 };
 
 export const behaviourOf = (v: Version): Behaviour => ({
@@ -308,4 +319,5 @@ export const behaviourOf = (v: Version): Behaviour => ({
   filledMark: filledMark(v),
   guarded: guarded(v),
   plainProgress: plainProgress(v),
+  intro: intro(v),
 });

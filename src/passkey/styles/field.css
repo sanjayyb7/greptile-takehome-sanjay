@@ -16,7 +16,11 @@
 }
 /* the strip's width, and the strip is the cells — so it is counted, not declared. A flat
    336px is four of them, and a field asked for six laid its strip outside its own box. */
-.passkey { display: flex; flex-direction: column; align-items: center; gap: 16px;
+/* position: relative so the heading can hang above the field without being part of its
+   column — see .pk-intro. Nothing else absolute resolves against this: the send box, the
+   goo and the caret all sit inside .pk-strip, which has its own. */
+.passkey { position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
   width: calc(var(--pk-cell-w) * var(--pk-length, 4));
   --pk-face: #fafafa; --pk-line: #e4e4e4; --pk-ink: #323232; --pk-bad: #b3261e;
   /* digit motion — distance, duration and curve in one place. The rise starts far enough

@@ -285,6 +285,18 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
                     0 0 0 26 -13" />
         </filter>
       </svg>
+      {/* Named before the cells, not after them: four boxes on an empty screen assume you
+          already know what they are for. It goes on success with everything else — the
+          question has been answered by then. */}
+      {b.intro && status !== "success" && (
+        <header className="pk-intro">
+          <h1 className="pk-intro-title">Check your email</h1>
+          <p className="pk-intro-body">
+            We&rsquo;ve sent you a temporary login code. Please check your inbox at{" "}
+            <strong>{resendTo ?? "you@example.com"}</strong>.
+          </p>
+        </header>
+      )}
       {/* the row keeps its height in every state so the strip never jumps */}
       <p className="pk-status" ref={statusRef} role="status" aria-live="polite">
         {above && (

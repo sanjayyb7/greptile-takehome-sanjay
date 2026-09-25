@@ -393,3 +393,23 @@
   from { opacity: 0; filter: blur(4px); translate: 0 -4px; }
   to   { opacity: 1; filter: blur(0);   translate: 0 0; }
 }
+
+/* ---------- The line that says where the code went ---------- */
+
+/* Above the cells and as wide as they are, so the two blocks share one column edge.
+   Centred, like everything else this version says.
+
+   Out of the column, deliberately. In it, the heading pushed this version's strip 74px
+   below every other version's — and the row at the foot of the screen exists to compare
+   them, which it cannot do while the thing being compared moves as you walk along it. The
+   space above the strip is empty in every version anyway, so the heading costs nothing by
+   hanging in it. */
+.pk-intro { position: absolute; bottom: calc(100% + 8px); left: 0; right: 0;
+  margin: 0; text-align: center; font-family: "Inter", system-ui, sans-serif; }
+/* 28, against the status line's 24: this is the page's title and that is a state report,
+   and a title that matches the thing below it in size is not a title. */
+.pk-intro-title { margin: 0 0 8px; font-size: 28px; line-height: 34px; font-weight: 500;
+  color: var(--pk-ink); letter-spacing: -0.01em; }
+.pk-intro-body { margin: 0; font-size: 15px; line-height: 22px; color: #858585; }
+/* the address is the one part of the sentence anybody reads twice */
+.pk-intro-body strong { color: var(--pk-ink); font-weight: 500; }
