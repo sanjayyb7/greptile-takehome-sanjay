@@ -54,28 +54,32 @@
   background: var(--pk-focus); transform-origin: left center;
   scale: 0 1; translate: calc(-1 * var(--pk-send-gap)) 0; }
 
-/* The caret block, carried on through the gap. The block is what pushes the box out, but
-   the neck is blurred, and a blur rounds anything short into a point — so what came out
-   of the strip was a small rounded nub, not the block. This is drawn outside the filter,
-   crisp, at the block's own 44px and with its square front, spanning from the strip's
-   edge to the box's; the neck underneath still curves into the box and snaps. Closed
-   (scale 0) everywhere it is not animated open. */
-/* registered so it can be animated: the curve shrinks with the bar as it lets go */
-@property --pk-plug-r { syntax: "<length>"; inherits: true; initial-value: 10px; }
+/* The bridge between the strip and the box. The neck is blurred, and a blur rounds
+   anything short into a point — so what came out of the strip was a small nub, not the
+   block that pushed it. This is drawn outside the filter, crisp: a funnel that is the
+   block's full 44px at the strip's face, pinches to a waist, and opens to 44px again at
+   the box's. It forms as the box opens and pinches off; on the way back it forms again as
+   the box is pulled in. Invisible (0 × 0) everywhere it is not animated. */
+/* registered so it can be animated: the flare shrinks with the bar as it lets go */
+@property --pk-plug-r { syntax: "<length>"; inherits: true; initial-value: 0px; }
 .pk-goo-plug { position: absolute; left: 100%; top: 50%; z-index: 1; pointer-events: none;
-  width: 0; height: 44px; translate: 0 -50%; opacity: 0;
-  background: var(--pk-focus); --pk-plug-r: 10px; }
-/* Where it meets the box it flares, a concave curve above and below, so the box reads as
-   swelling out of the block rather than a bar being butted against it. Each fillet is the
-   corner between the bar's edge and the box's face with a quarter circle taken out of it;
-   no wider than the bar, so while the gap is narrower than the curve it never reaches back
-   over the strip's border. */
-.pk-goo-plug::before, .pk-goo-plug::after { content: ""; position: absolute; right: 0;
-  width: min(var(--pk-plug-r), 100%); height: var(--pk-plug-r); }
+  width: 0; height: 0; translate: 0 -50%; background: var(--pk-focus); }
+/* The flares, above and below: each is the bar's corner with a quarter ellipse taken out
+   of it, one at the strip's face and one at the box's, meeting in the middle. Sized to
+   half the bar, so however far the gap has opened the curve runs from the full 44px at
+   each face down to the waist between them — a funnel out, and a funnel in. */
+.pk-goo-plug::before, .pk-goo-plug::after { content: ""; position: absolute; left: 0; right: 0;
+  height: var(--pk-plug-r); background-size: 50% 100%; background-repeat: no-repeat; }
 .pk-goo-plug::before { bottom: 100%;
-  background: radial-gradient(circle var(--pk-plug-r) at 0 0, transparent 99%, var(--pk-focus) 100%); }
+  background-image:
+    radial-gradient(ellipse 100% 100% at 100% 0, transparent 99%, var(--pk-focus) 100%),
+    radial-gradient(ellipse 100% 100% at 0 0, transparent 99%, var(--pk-focus) 100%);
+  background-position: left top, right top; }
 .pk-goo-plug::after { top: 100%;
-  background: radial-gradient(circle var(--pk-plug-r) at 0 100%, transparent 99%, var(--pk-focus) 100%); }
+  background-image:
+    radial-gradient(ellipse 100% 100% at 100% 100%, transparent 99%, var(--pk-focus) 100%),
+    radial-gradient(ellipse 100% 100% at 0 100%, transparent 99%, var(--pk-focus) 100%);
+  background-position: left top, right top; }
 
 /* the box keeps its own green and its own corners, and sits over the goo rather than in
    it — the liquid is only what runs between it and the strip */
