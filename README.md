@@ -3,7 +3,7 @@
 A 4-digit passcode entry, built from the supplied design in React 19 + Vite + TypeScript.
 
 
-https://github.com/user-attachments/assets/132046b3-1f38-473b-90fe-c32ec7e4d4a3
+https://github.com/user-attachments/assets/9d980823-9ae2-4829-9aa1-ab537810e54d
 
 
 **Live explorations:** https://passcode-explorations.vercel.app
@@ -15,9 +15,8 @@ failure, edge cases) was open, so each idea was built as its own version and com
 switcher. The **`explorations`** branch has all of them; **`main`** is only the chosen one
 (dot 7), and the two are identical pixel for pixel.
 
-It wasn't clear how far the design could move, so the chosen version stays inside the
-frames. **Dot 8** goes one step further: a "Check your email" heading with the address the
-code went to. Saying where the code was sent felt right, so it's shown as an exploration.
+I wasn't sure I could add this, but I added "Check your email" on top, with the address
+the code was sent to.
 
 ## The animation: a continuity transition
 
@@ -40,8 +39,8 @@ the one before it.
 | 4 | [Version 2](https://passcode-explorations.vercel.app/?v=2) | Send box in its own container |
 | 5 | [Version 4](https://passcode-explorations.vercel.app/?v=4) | Box attached, then shoved clear |
 | 6 | [Fluid](https://passcode-explorations.vercel.app/?v=5) | Box separates like liquid |
-| 7 | [**Chosen**](https://passcode-explorations.vercel.app/?v=8) | The block pushes the box out; every case answered |
-| 8 | [Check your email](https://passcode-explorations.vercel.app/?v=14) | Dot 7 plus where the code went, a filled mark, no shadow |
+| 7 | [**Chosen**](https://passcode-explorations.vercel.app/?v=8) | "Check your email" on top; the block pushes the box out; every case answered |
+| 8 | [Filled circle](https://passcode-explorations.vercel.app/?v=14) | Dot 7 with a filled circle for the mark and no shadow on the selected cell |
 
 ## Run it
 
@@ -54,5 +53,3 @@ npm run dev      # opens at http://localhost:5173
 
 - **`1234`**: the correct passcode, shows success
 - **Any other 4 digits**: shows "Incorrect code"
-- **`0000`**: shows "Not verified" (simulates a failed connection)
-- **Fewer than 4 digits, then Enter**: shows "Missing digits"
