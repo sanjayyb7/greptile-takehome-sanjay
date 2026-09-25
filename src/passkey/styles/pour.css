@@ -98,7 +98,7 @@
 .passkey[data-verdicts][data-fail="mark"] .pk-status-text:not([data-leaving]) { color: var(--pk-bad); }
 .passkey[data-verdicts][data-fail="mark"]:not([data-busy]) .pk-strip:not([data-parked]) .pk-cell:focus {
   border-color: var(--pk-bad); transition: none;
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--pk-bad) 12%, transparent); }
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--pk-bad) var(--pk-bad-glow), transparent); }
 .passkey[data-verdicts][data-fail="mark"] .pk-caret { background: var(--pk-bad); }
 
 @media (prefers-reduced-motion: reduce) {
