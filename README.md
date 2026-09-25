@@ -2,8 +2,90 @@
 
 A 4-digit authentication code entry experience — the kind you type to mirror a laptop onto a TV.
 
+<!-- Demo video: edit this file on github.com and drag an .mp4 or .mov onto this line.
+     GitHub uploads it and replaces it with a link that plays inline (10MB on a free plan). -->
+
 The static states come from the supplied design and are matched exactly. Everything between
-those states — timing, feedback, failure, edge cases — is the part that was open-ended.
+those states — timing, feedback, failure, edge cases — was left open, and that is where the
+work went.
+
+## How it got here
+
+### Explorations first, then a choice
+
+There are two branches:
+
+- **[`explorations`](https://github.com/sanjayyb7/greptile-takehome-sanjay/tree/explorations)**
+  — every direction that was tried, each one a dot on a switcher at the bottom of the page.
+  Live at **https://passcode-explorations.vercel.app**. The strip sits at the same point on
+  screen in every version, so switching between them compares the motion and nothing else.
+- **`main`** — only the one that was chosen, with nothing else in it. It is the same code
+  as dot 7 on the explorations branch, and the two are checked against each other pixel
+  for pixel.
+
+Rather than settle on the first idea for each open question, each idea became a version,
+and each version was used — typed into, backspaced, refused, resent — until it was clear
+what it got right and what it got wrong. Later versions keep what earlier ones got right.
+
+It was not clear how far the design could be moved away from the supplied frames. The chosen
+version stays inside them. Version 8 goes one step further and is kept as an exploration: a
+**"Check your email"** heading above the field, with the address the code was sent to.
+Four empty boxes assume you already know what they are for; saying where the code went
+answers the two questions people arrive with — what is this, and where do I look — before
+the field asks for anything. That change felt clearly right, so it is shown, but it is
+kept out of the chosen version because it goes beyond the design.
+
+### The idea: every step is pushed by the one before
+
+The brief asks for Enter to submit, which means the code must not submit itself the moment
+the fourth digit lands. So there has to be a moment where the code is complete but not
+sent, and something to press. The whole interaction grew out of making that moment feel
+caused rather than appearing:
+
+1. **The caret writes.** It is a block that crosses into the next cell and writes the digit
+   as it passes over it. Deleting runs the same crossing backwards and rubs the digit out.
+   Holding a digit or Backspace fills or empties the field at one even pace, a cell per
+   crossing, with no stall after the first.
+2. **The block pushes the send box out.** On the fourth digit the block carries on to the
+   strip's edge, and only when it touches the edge does the box start to open. Between the
+   two runs a bridge at the block's own height — it holds while the block is still pushing,
+   drains from the block's end once the block has gone into the edge, and the box takes in
+   the rest.
+3. **The box shows the arrow.** Once the box has cleared the strip, the arrow travels into
+   it. Press it, or press Enter, and the code goes. Backspace on a complete code plays the
+   whole thing in reverse: the arrow leaves, the bridge forms again, the box is pulled back
+   into the strip. Retyping the last digit halfway through turns the box round from where
+   it is.
+4. **The loader closes into the answer.** While the code is checked the spinner turns.
+   Accepted, its spokes gather into a dot that opens into the tick, and the row travels
+   down into the cells' place. Refused, the same dot opens into a red "!" instead, and the
+   label, the selected cell and the shake all land on that frame, the shake lasting exactly
+   as long as the mark takes to draw.
+
+### The tour
+
+| Dot | Version | What it tried |
+| --- | --- | --- |
+| 1 | [Vanishing letters](https://passcode-explorations.vercel.app/?v=13) | The digit rises in through the cell's bottom edge and slides back down past it |
+| 2 | [Caret: smear](https://passcode-explorations.vercel.app/?v=12) | The caret stretches into a block as it travels, then snaps back to a line |
+| 3 | [Version 1](https://passcode-explorations.vercel.app/?v=1) | A send box on the end of the strip; digits rise into place |
+| 4 | [Version 2](https://passcode-explorations.vercel.app/?v=2) | The send box set apart in its own container |
+| 5 | [Version 4](https://passcode-explorations.vercel.app/?v=4) | The box arrives attached, then is shoved clear — the push opens the gap |
+| 6 | [Fluid](https://passcode-explorations.vercel.app/?v=5) | The box separates from the strip like liquid; a neck thins and breaks |
+| 7 | [**The chosen one**](https://passcode-explorations.vercel.app/?v=8) | The block pushes the box out through the bridge; the box clears in one move; every case is answered out loud |
+| 8 | [Check your email](https://passcode-explorations.vercel.app/?v=14) | Dot 7 plus a heading naming where the code went, a filled circle for the mark, no shadow on the selected cell, and a resend that sends on the press |
+
+A liquid pour — the send box pouring up into the loader — was also built, and is set aside
+in the code rather than on the switcher.
+
+### Then making it hold up
+
+Once the interaction was settled, the same component went through a reliability pass
+without changing how it looks: keyboard focus that never gets trapped, one-time-code
+autofill and mobile keyboard deletion, phones down to 320px, reduced motion that really
+removes movement, verification that a reset or an unmount can no longer be overtaken by a
+late answer, and a callback for when the success animation has finished. Every fix has a
+test, and each was run against the code without its fix to see it fail.
 
 ## Running locally
 
@@ -68,10 +150,10 @@ confirming it fails.
 
 - **`1234`** — the spokes gather into a dot, the dot opens into the mark, the tick is drawn
   across it as the label changes, and the two travel down into the cells' place
-- **Any other code** — the box goes, the last cell is selected, and the strip shakes and
-  turns red for exactly as long as the shake lasts. The red lifts; the line underneath
-  stays until something is edited. The code stays on screen too: clearing it is the
-  person's move
+- **Any other code** — the box goes, the spinner closes into a red "!", "Incorrect code"
+  appears in the status row, the last cell is selected in red, and the strip shakes for as
+  long as the mark takes to draw. The code stays on screen — clearing it is the person's
+  move — and any edit clears the verdict
 - **Backspace** — clears the cell it is in and stays there, the way a text field does:
   what you deleted is where the replacement goes. Only a press on a cell that is already
   empty steps back. The same two rules whatever has happened, a refused code included —
@@ -83,8 +165,9 @@ confirming it fails.
   the send box carries the moment on its own
 - **Enter on a half-filled code** — nudges focus to the gap instead of failing
 - **Resend** — offered from the first frame, because waiting out a timer for a code that
-  never arrived helps nobody. The line then answers in sequence: sending, sent, the 30s
-  wait counting down, the offer again. A new code leaves what you have typed alone
+  never arrived helps nobody. It asks first, naming the address the code will go to; then
+  the line answers in sequence: "Code resent", the 30s wait counting down, the offer again.
+  A new code leaves what you have typed alone
 - **Send** — the code is not submitted automatically. The fourth digit opens a fifth box on
   the end of the strip and the code goes when it is pressed, so a mistyped digit stays
   fixable. Enter still submits, and `?auto` restores submit-on-last-digit
@@ -96,8 +179,8 @@ confirming it fails.
 
 ## Structure
 
-One version of the field and nothing else: the ten explorations that produced it live on
-`main`, and this branch is only what was chosen. No switcher, no variant flags, no code
+One version of the field and nothing else: the explorations that produced it live on the
+`explorations` branch, and this branch is only what was chosen. No switcher, no variant flags, no code
 for a path this build never takes.
 
 | | Files | What |
@@ -246,10 +329,11 @@ failure is almost always a typo. Locking punishes the typo. The only rate limit 
 asking for a *new* code, because sending is the expensive side.
 
 **Failure is invented.** None of it appears in the design, so the red, the shake and the
-copy are choices. Progress reads above the strip where the design puts it; failure reads
-underneath, flush with the strip's left edge, so the two never compete for the same line.
-The rejection is a moment rather than a state — the red lasts exactly as long as the shake
-and then the field is itself again, with the line underneath carrying it from there.
+copy are choices. The verdict is said where progress is said — in the status row above the
+strip — so a success and a refusal arrive in the same place and out of the same motion:
+the spinner closes to a dot, and the dot opens into a tick or a red "!". Each case has its
+own words: "Incorrect code" means retype it, "Missing digits" means finish it, and "Not
+verified" means the check never answered, so the digits may well be right.
 
 **Resend is offered from the first frame.** The design has no resend control, so this is an
 addition: it answers "what if the code never arrived", which the four frames don't. Asking
@@ -257,12 +341,11 @@ is what arms the wait, because sending is what costs — a timer running before 
 been sent is a timer on a question nobody asked.
 
 Once a code has gone, the wait counts down in the open rather than waiting to be asked
-for. A timer reads as a penalty when it appears unexplained; following "New code sent" it
-is the answer to the obvious next question, which is when the next one can be had. The
-seconds are zero-padded and tabular so the line cannot reflow as it ticks, and it is left
-aligned with the strip so only its right edge is ever in motion. A new code leaves
-whatever is typed alone — those digits are the person's work, and a code arriving by SMS
-is no reason to throw it away.
+for. A timer reads as a penalty when it appears unexplained; following "Code resent" it is
+the answer to the obvious next question, which is when the next one can be had. The
+seconds are tabular so the line cannot reflow as it ticks. A new code leaves whatever is
+typed alone — those digits are the person's work, and a code arriving by SMS is no reason
+to throw it away.
 
 **Success drops the strip.** The design's authenticated frame shows the label alone, so the
 cells exit. That's an inference from what the frame omits.
@@ -271,18 +354,19 @@ cells exit. That's an inference from what the frame omits.
 middle cell focused; squaring off an end would break the strip's silhouette.
 
 **State never shifts the layout.** The status row holds its 32px whether or not it has a
-message, and the field holds the height of its tallest state — so the
-failure line appears in space that was already reserved rather than lifting the cells 19px
-at the moment you are about to retype them.
+message, and every verdict is said there, so nothing arrives under the strip to lift the
+cells at the moment you are about to retype them.
 
 ## Accessibility
 
 Real inputs with `aria-label` per cell, `inputMode="numeric"`, `autocomplete="one-time-code"`,
 and a `role="status"` live region announcing each state change. The animated glyph layer is
-`aria-hidden`.
+`aria-hidden`. The cells take one Tab stop — the cell typing would go to — so Tab and
+Shift+Tab pass through the field and out again, including while a code is being checked;
+once authenticated, the faded cells leave the focus order and the accessibility tree.
 
 Under `prefers-reduced-motion` the digits appear and clear immediately, the caret stops
-travelling, the shake is dropped and the success sequence keeps its states but loses its
-travel. The spinner keeps pulsing — the wait still has to read as a wait — but on opacity
+travelling, the shake is dropped, labels and the arrow fade instead of sliding, and the
+success sequence keeps its states but loses its travel. The spinner keeps pulsing — the wait still has to read as a wait — but on opacity
 alone, pinned at its resting radius, so nothing moves. Reduced motion means less motion,
 not no feedback.
