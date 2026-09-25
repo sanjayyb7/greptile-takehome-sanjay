@@ -32,6 +32,7 @@ function Demo() {
         autoSubmit={auto || !hasSend(version)}
         send={!auto && hasSend(version)}
         onSuccess={(code) => console.log("authenticated:", code)}
+        onSuccessAnimationComplete={(code) => console.log("animation complete:", code)}
       />
       <VersionDots value={version} onChange={setVersion} beside={<ThemeToggle />} />
     </>

@@ -12,6 +12,10 @@ const LENGTH = 4;
 /** how long the outgoing line has to be held on for: the pk-v2-label-* delay plus its
  *  duration, 160 + 200. Keep in step with passkey.css. */
 const LABEL_SWAP_MS = 360;
+/** how long the authenticated row takes to travel down — the pk-status translate
+ *  transition on data-phase="settled". Only a backstop: completion is read off the
+ *  transition's own end. Keep in step with passkey.css. */
+const DROP_MS = 280;
 
 type Passkey = ReturnType<typeof usePasskey>;
 
@@ -60,7 +64,7 @@ function problem(p: Passkey, guarded: boolean, length: number, inRow: boolean) {
 /** Passcode entry: four cells, a status line above, and the states in between */
 export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true,
   version = FINAL, behaviour, length = LENGTH, onVerify, onResend, resendCooldown,
-  resendTo, onSuccess }: {
+  resendTo, onSuccess, onSuccessAnimationComplete }: {
   autoFocus?: boolean;
   /** submit as soon as the last digit lands; off when the Send button is doing that job */
   autoSubmit?: boolean;
@@ -86,7 +90,13 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
   resendCooldown?: number;
   /** where a new code is sent — named in the confirmation, where it is the whole point */
   resendTo?: string;
+  /** the code was accepted — the moment the check answers, while the success animation
+   *  is only starting */
   onSuccess?: (code: string) => void;
+  /** and the success animation has finished, the downward move included: the moment to
+   *  navigate away. Once per success. Under reduced motion, as soon as the final
+   *  authenticated state is on screen. */
+  onSuccessAnimationComplete?: (code: string) => void;
 }) {
   const b = behaviour ?? behaviourOf(version);
   /* The goo filter is referenced from CSS, which cannot know a generated id — so the id is
@@ -241,6 +251,37 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
 
   // the sequenced styles hold the strip so its space stays reserved to travel into
   const stripMounted = sequenced.current || phase === "none" || phase === "clearing";
+  /*
+   * The end of the success sequence, told once. It is the DROP's own transition ending
+   * that says so rather than a timer counting to it, so the notice lands on the frame the
+   * row arrives however the stylesheet is timed; the timer is only there in case no
+   * transition runs at all. Reduced motion lands straight on "settled" with no travel, so
+   * that is announced as soon as it has been painted.
+   */
+  const finished = useRef(onSuccessAnimationComplete);
+  useEffect(() => { finished.current = onSuccessAnimationComplete; });
+  const acceptedCode = passkey.digits.join("");
+  useEffect(() => {
+    if (status !== "success" || phase !== "settled") return;
+    let told = false;
+    const tell = () => {
+      if (told) return;
+      told = true;
+      finished.current?.(acceptedCode);
+    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const frame = requestAnimationFrame(tell);
+      return () => cancelAnimationFrame(frame);
+    }
+    const el = statusRef.current;
+    const landed = (e: TransitionEvent) => {
+      if (e.target === el && e.propertyName === "translate") tell();
+    };
+    el?.addEventListener("transitionend", landed);
+    const backstop = window.setTimeout(tell, DROP_MS + 120);
+    return () => { el?.removeEventListener("transitionend", landed); clearTimeout(backstop); };
+  }, [status, phase, acceptedCode]);
+
   const above = phase === "done" || phase === "settled" ? "Authenticated"
     : fail === "closing" ? progress({ ...passkey, status: "verifying" }, b.plainProgress)   // held until the mark
     : fail === "mark" ? verdict(passkey)
