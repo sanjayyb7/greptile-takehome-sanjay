@@ -104,6 +104,8 @@
 @media (prefers-reduced-motion: reduce) {
   /* no pour at all — the loader simply appears — and the mark lands without opening */
   .pk-pour { display: none; }
+  /* a refusal's spinner does not gather — it simply gives way to the "!" */
+  .passkey[data-verdicts][data-fail] .pk-spoke { animation: none; }
   .passkey[data-verdicts][data-fail="mark"] .pk-bang-glyph,
   .passkey[data-verdicts][data-fail="mark"] .pk-bang-stem,
   .passkey[data-verdicts][data-fail="mark"] .pk-bang-dot { transition: none; }

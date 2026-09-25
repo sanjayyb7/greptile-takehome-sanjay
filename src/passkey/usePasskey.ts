@@ -399,29 +399,73 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
    * start. Dropped at the caret instead, a full code pasted into the third cell would
    * lose its last two digits off the end, which is never what was meant.
    */
-  const onPaste = useCallback((e: React.ClipboardEvent) => {
-    if (busy) return;
-    const code = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
-    if (!code) return;
-    e.preventDefault();
+  const place = useCallback((code: string, at: number) => {
     const whole = code.length >= length;
-    const at = whole ? 0 : focusedRef.current ?? 0;
+    const from = whole ? 0 : at;
     // a whole code replaces; a fragment is written over what it covers and leaves the
     // rest alone, because the digits it does not reach were not being corrected
     const next = whole ? Array.from({ length }, (_, i) => code[i] ?? "") : [...latest.current];
     const written: number[] = [];
-    for (let i = 0; i < code.length && at + i < length; i++) {
-      next[at + i] = code[i];
-      written.push(at + i);
+    for (let i = 0; i < code.length && from + i < length; i++) {
+      next[from + i] = code[i];
+      written.push(from + i);
     }
     edited();
     setEntry("paste");
     setAll(next);
     stamp(written);                                   // all at once, no stagger
-    focusAt(Math.min(length - 1, at + code.length));
+    focusAt(Math.min(length - 1, from + code.length));
     if (next.every(Boolean)) setPicked(false);
     if (autoSubmit && next.every(Boolean)) submit();
-  }, [autoSubmit, busy, edited, focusAt, length, setAll, stamp, submit]);
+  }, [autoSubmit, edited, focusAt, length, setAll, stamp, submit]);
+
+  const onPaste = useCallback((e: React.ClipboardEvent) => {
+    // taken over whatever it holds: nothing but digits reaches a cell, not even for a frame
+    e.preventDefault();
+    if (busy) return;
+    const code = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
+    if (code) place(code, focusedRef.current ?? 0);
+  }, [busy, length, place]);
+
+  /**
+   * What reaches a cell without a keydown to handle it: one-time-code autofill, a mobile
+   * keyboard, dictation. Typed digits never get here — keydown takes them first.
+   *
+   * Autofill writes the whole code into the one input it was offered in, so more than one
+   * digit arriving at once is placed the way a paste is; a single new digit is written the
+   * way a keystroke is. An input that has gone empty was deleted by a keyboard that did not
+   * say so with a Backspace key — see onBeforeInput, which catches that first where it can.
+   */
+  const onInput = useCallback((i: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    if (busy) return;
+    const raw = e.target.value;
+    const digits = raw.replace(/\D/g, "");
+    const had = latest.current[i];
+    if (!raw) { if (had) { focusedRef.current = i; stopErasing(); eraseStep(); } return; }
+    // the old digit is still in the value when a keyboard appends rather than replaces
+    const fresh = had && digits.startsWith(had) && digits.length === 2 ? digits.slice(1) : digits;
+    if (fresh.length > 1) place(fresh.slice(0, length), i);
+    else write(i, fresh);
+  }, [busy, eraseStep, length, place, stopErasing, write]);
+
+  /**
+   * Deletion, as the browser reports it rather than as a key.
+   *
+   * Android keyboards send Backspace as an "Unidentified" key, so the keydown handler
+   * never recognises it and the delete arrives only as an input event. This takes it
+   * there and does exactly what Backspace does. Where a real Backspace keydown was
+   * handled, it was cancelled, and a cancelled keydown sends no beforeinput — so nothing
+   * here runs twice.
+   */
+  const onBeforeInput = useCallback((i: number, e: InputEvent) => {
+    if (busy) { e.preventDefault(); return; }
+    if (!e.inputType.startsWith("delete")) return;
+    e.preventDefault();
+    setEntry("type");
+    focusedRef.current = i;
+    stopErasing();
+    eraseStep();
+  }, [busy, eraseStep, stopErasing]);
 
   /**
    * Focus lands where there is something to do.
@@ -455,6 +499,6 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
   return {
     digits, stamps, status, shake, busy, focused, onFocus, onBlur, erasePace, entry,
     cooldown, resending, resend, clearResendError, problem, stale, submit,
-    cells, write, onKeyDown, onPaste, reset, focusAt, picked, pick,
+    cells, onInput, onBeforeInput, onKeyDown, onPaste, reset, focusAt, picked, pick,
   };
 }

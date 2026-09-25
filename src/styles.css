@@ -53,3 +53,9 @@ body { margin: 0; background: var(--page); --page: #fff;
 @media (hover: hover) and (pointer: fine) {
   :root[data-theme="dark"] .theme-toggle:hover { color: #ededed; border-color: #44474b; }
 }
+
+/* on a narrow screen there is no room beside the track, so the switch sits just above
+   its right end instead of hanging past the edge of the page */
+@media (max-width: 400px) {
+  .theme-toggle { left: auto; right: 0; top: auto; bottom: 100%; translate: none; margin: 0 0 8px; }
+}

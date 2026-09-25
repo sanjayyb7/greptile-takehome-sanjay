@@ -363,12 +363,17 @@ export function PasskeySend({ passkey, falls = false, fluid = false, smooth = fa
     <>
       {fluid && (
         // the root stays behind at the strip's edge; the blob is the box's green, and the
-        // neck between them is the filter's doing, not a shape anyone drew
+        // neck between them is the filter's doing, not a shape anyone drew. Not in the
+        // smooth versions: the bridge is their whole join, and the layer drew nothing
+        // there — while its blur margin still reached 48px past the box, off the edge of
+        // a narrow screen.
         <>
-          <span className="pk-goo" aria-hidden="true">
-            <span className="pk-goo-root" ref={root} />
-            <span className="pk-goo-blob" ref={blob} />
-          </span>
+          {!smooth && (
+            <span className="pk-goo" aria-hidden="true">
+              <span className="pk-goo-root" ref={root} />
+              <span className="pk-goo-blob" ref={blob} />
+            </span>
+          )}
           <span className="pk-goo-plug" ref={plug} aria-hidden="true" />
         </>
       )}

@@ -432,7 +432,7 @@ export function PasskeyCells({ passkey, length, send, written, fadeIn, vanish, c
    */
   shakeOn?: number;
 }) {
-  const { digits, stamps, status, shake: rejected, busy, focused, cells, write, onKeyDown, onPaste, onFocus, onBlur, erasePace, entry, stale, picked, pick } = passkey;
+  const { digits, stamps, status, shake: rejected, busy, focused, cells, onInput, onBeforeInput, onKeyDown, onPaste, onFocus, onBlur, erasePace, entry, stale, picked, pick } = passkey;
   const strip = useRef<HTMLDivElement>(null);
 
   const shake = shakeOn ?? rejected;
@@ -480,8 +480,33 @@ export function PasskeyCells({ passkey, length, send, written, fadeIn, vanish, c
   const { wipe, ref: wipeRef } = useWipe(busy || !wipes ? null : caretAt, erasePace, length,
     entry === "paste", refused, strip);
 
+  /* One stop in the Tab order, not four: the cell typing would go to — the focused one,
+     else the first gap, else the last. With every cell tabbable, Tab from the first empty
+     cell landed on the second, which onFocus steers back to the first gap, so focus could
+     never leave the field. The arrow keys still move between cells. */
+  const gap = digits.findIndex((d) => !d);
+  const tabStop = focused ?? (gap === -1 ? length - 1 : gap);
+
+  /* Deletion reported by the browser rather than as a key — see onBeforeInput. React has
+     no handler for beforeinput's delete types, so it is listened for on the elements. */
+  const deleting = useRef(onBeforeInput);
+  deleting.current = onBeforeInput;
+  useEffect(() => {
+    const els = cells.current.slice(0, length);
+    const off = els.map((el, i) => {
+      if (!el) return () => {};
+      const on = (e: Event) => deleting.current(i, e as InputEvent);
+      el.addEventListener("beforeinput", on);
+      return () => el.removeEventListener("beforeinput", on);
+    });
+    return () => off.forEach((f) => f());
+  }, [cells, length]);
+
   return (
     <div className="pk-strip" ref={strip} onPaste={onPaste} data-send={showSend ? "on" : undefined}
+      /* authenticated, the cells have faded out: they leave the focus order and the
+         accessibility tree with it, rather than lingering as invisible inputs */
+      inert={status === "success"} aria-hidden={status === "success" || undefined}
       /* The box is up AND nobody has chosen a cell since — which is when the ring and the
          caret stand down. Separate from data-send, because the box being up is not on its
          own a reason to hide where typing would land. */
@@ -495,12 +520,14 @@ export function PasskeyCells({ passkey, length, send, written, fadeIn, vanish, c
             className="pk-cell"
             value={digit}
             readOnly={busy}
+            tabIndex={i === tabStop ? 0 : -1}
             inputMode="numeric"
             pattern="[0-9]*"
+            /* no maxLength: one-time-code autofill writes the whole code into one cell,
+               and a limit of 1 cut it to its first digit — onInput spreads it instead */
             autoComplete="one-time-code"
-            maxLength={1}
             aria-label={`Digit ${i + 1} of ${length}`}
-            onChange={(e) => write(i, e.target.value)}
+            onChange={(e) => onInput(i, e)}
             onKeyDown={(e) => onKeyDown(i, e)}
             onFocus={(e) => onFocus(i, e)}
             onPointerDown={pick}

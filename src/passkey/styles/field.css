@@ -51,7 +51,11 @@
   /* 0: the block leaving the last cell is what shoves the box, and the arrow turns up
      once it has settled. 1: the box waits for the arrow and is shoved by that instead. */
   --pk-arrow-push: 0;
-  --pk-cell-w: 84px; --pk-send-gap: 16px; --pk-caret-ms: 300ms; --pk-digit-blur: 4px;
+  /* 84px, the design's cell, wherever it fits. On a narrow screen the strip is centred and
+     the send box opens a gap and a cell past its right edge, so what has to fit in half
+     the width is two cells, the gap, one more cell, and the page's 24px margin — three
+     cells in (50vw - 40px). Anything 584px or wider gets exactly 84. */
+  --pk-cell-w: min(84px, (50vw - 40px) / 3); --pk-send-gap: 16px; --pk-caret-ms: 300ms; --pk-digit-blur: 4px;
   /* the authenticated mark and its label resolve the same way the digits do */
   --pk-mark-blur: 8px; --pk-label-blur: 6px; }
 
