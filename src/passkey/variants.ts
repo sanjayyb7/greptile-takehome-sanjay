@@ -15,7 +15,7 @@
  *
  * VERSIONS is what is on offer, in the order it is offered in: the row is numbered by
  * position, so this array is the running order and nothing else needs to know about it.
- * The Version union is what the code can still run — 3, 6, 7, 9, 10, 11 and 17 were set
+ * The Version union is what the code can still run — 3, 6, 7, 9, 10, 11, 17 and 18 were set
  * aside rather than deleted, so their behaviour is still built and still reachable from the
  * predicates below. Putting one back on the row is a single line here.
  */
@@ -29,8 +29,7 @@ export const VERSIONS: { id: Version; name: string; note: string; label?: string
   { id: 4, name: "Version 4", note: "Send box arrives attached, then is shoved clear — the push opens the gap" },
   { id: 5, name: "Fluid", note: "The box separates from the strip like liquid — a neck thins and breaks" },
   { id: 8, name: "Smooth, box clears", note: "The box opens and clears in one move; the press sends it away, and every case is answered out loud" },
-  { id: 14, name: "Filled circle", note: "Says where the code went first. The send box pours up into the spinner, which closes into a filled circle" },
-  { id: 18, name: "Liquid pour", note: "The send box is liquid: pressing it pours it up into the loader, and the loader closes into the answer — a tick, or a red \u201c!\u201d" },
+  { id: 14, name: "Filled circle", note: "Says where the code went first. A wrong code closes the spinner into a red \u201c!\u201d, and success into a filled circle" },
 ];
 
 /*
@@ -271,7 +270,7 @@ const intro = (v: Version) => v === 14;
  * into spokes already turning. Nothing appears or disappears between the press and the
  * verdict — the green that was pressed is the green that spins. See PasskeyPour.
  */
-const pours = (v: Version) => v === 14 || v === 18;
+const pours = (v: Version) => v === 18;
 
 /**
  * The verdict is said in the status row, and a refusal closes the loader into a red "!".
