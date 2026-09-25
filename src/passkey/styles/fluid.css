@@ -60,21 +60,22 @@
    block's full 44px at the strip's face, pinches to a waist, and opens to 44px again at
    the box's. It forms as the box opens and pinches off; on the way back it forms again as
    the box is pulled in. Invisible (0 × 0) everywhere it is not animated. */
-/* registered so it can be animated: the flare shrinks with the bar as it lets go */
-@property --pk-plug-r { syntax: "<length>"; inherits: true; initial-value: 0px; }
+/* registered so they can be animated: each end's flare, the block's end and the box's */
+@property --pk-plug-rl { syntax: "<length>"; inherits: true; initial-value: 0px; }
+@property --pk-plug-rr { syntax: "<length>"; inherits: true; initial-value: 0px; }
 .pk-goo-plug { position: absolute; left: 100%; top: 50%; z-index: 1; pointer-events: none;
   width: 0; height: 0; translate: 0 -50%; background: var(--pk-focus); }
-/* The flares, above and below: each is the bar's corner with a quarter ellipse taken out
-   of it, one at the strip's face and one at the box's, meeting in the middle. Sized to
-   half the bar, so however far the gap has opened the curve runs from the full 44px at
-   each face down to the waist between them — a funnel out, and a funnel in. */
+/* The flares, above and below: at each end the bar's corner with a quarter ellipse taken
+   out of it, the block's end on the left and the box's on the right, each half the bar
+   wide. Separate heights, so the block's end can drain before the box's is taken in. */
 .pk-goo-plug::before, .pk-goo-plug::after { content: ""; position: absolute; left: 0; right: 0;
-  height: var(--pk-plug-r); background-size: 50% 100%; background-repeat: no-repeat; }
+  height: max(var(--pk-plug-rl), var(--pk-plug-rr)); background-repeat: no-repeat;
+  background-size: 50% var(--pk-plug-rl), 50% var(--pk-plug-rr); }
 .pk-goo-plug::before { bottom: 100%;
   background-image:
     radial-gradient(ellipse 100% 100% at 100% 0, transparent 99%, var(--pk-focus) 100%),
     radial-gradient(ellipse 100% 100% at 0 0, transparent 99%, var(--pk-focus) 100%);
-  background-position: left top, right top; }
+  background-position: left bottom, right bottom; }
 .pk-goo-plug::after { top: 100%;
   background-image:
     radial-gradient(ellipse 100% 100% at 100% 100%, transparent 99%, var(--pk-focus) 100%),

@@ -117,6 +117,7 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
     running.forEach((a) => a.cancel());
     // the bridge's animations fill both ways too, and a new one would stack on the last
     plug.current?.getAnimations().forEach((a) => a.cancel());
+    root.current?.getAnimations().forEach((a) => a.cancel());
     const gap = parseFloat(style.getPropertyValue("--pk-send-gap")) || 16;
 
     /*
@@ -137,26 +138,32 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
       const opened = parseFloat(style.getPropertyValue("--pk-smooth-ms")) || SMOOTH_MS;
       const ms = leaving ? SEND_OUT_MS : opened;
       el.style.setProperty("--pk-arrow-delay", `${(entry === "paste" ? PASTE_FADE_MS : 0) + ms}ms`);
-      root.current?.animate(
-        leaving
-          ? [{ scale: "1 0" }, { scale: ".6 .5", offset: 0.5 }, { scale: "0 .78" }]
-          : [{ scale: "0 .78" }, { scale: ".6 .5", offset: 0.55 }, { scale: "1 0" }],
-        { duration: ms, delay: entry === "paste" ? PASTE_FADE_MS : 0,
-          easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
-      );
+      // no blurred neck here: its bulge made the box's end of the bridge bigger than the
+      // block's, and the bridge below is the whole of the join, crisp at both ends
       // The bridge: a funnel from the block into the box — full height at the strip's
       // face, pinched in the middle, full height again at the box's. Its width IS the
       // progress, so its far end stays on the box's edge as the gap opens; it holds its
       // shape until the neck has thinned behind it, then pinches off. Sizes rather than
       // scale, so the curves keep their shape instead of being squeezed with the bar.
-      if (!leaving) plug.current?.animate(
-        [{ width: "0px", height: `${PLUG_WAIST}px`, "--pk-plug-r": `${PLUG_R}px` },
-         { width: `${gap * 0.75}px`, height: `${PLUG_WAIST}px`, "--pk-plug-r": `${PLUG_R}px`, offset: 0.75 },
-         { width: `${gap * 0.9}px`, height: "0px", "--pk-plug-r": "0px", offset: 0.9 },
-         { width: `${gap}px`, height: "0px", "--pk-plug-r": "0px" }],
-        { duration: ms, delay: entry === "paste" ? PASTE_FADE_MS : 0,
-          easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
-      );
+      if (!leaving) {
+        const [W, R] = [PLUG_WAIST, PLUG_R];
+        plug.current?.animate(
+          [// the block's height at both faces, held while the block is at the strip's edge.
+           // Offsets are in eased progress: 0.68 is ~120ms in, when the block starts to narrow
+           // into the edge — until then the bridge is the block, carried on.
+           { width: "0px", height: `${W}px`, "--pk-plug-rl": `${R}px`, "--pk-plug-rr": `${R}px` },
+           { width: `${gap * 0.68}px`, height: `${W}px`, "--pk-plug-rl": `${R}px`, "--pk-plug-rr": `${R}px`, offset: 0.68 },
+           // as the block goes into the edge, the block's end drains with it: what leaves the
+           // block is carried forward
+           { width: `${gap * 0.8}px`, height: `${W * 0.7}px`, "--pk-plug-rl": `${R * 0.3}px`, "--pk-plug-rr": `${R}px`, offset: 0.8 },
+           { width: `${gap * 0.89}px`, height: `${W / 3}px`, "--pk-plug-rl": "0px", "--pk-plug-rr": `${R}px`, offset: 0.89 },
+           { width: `${gap * 0.95}px`, height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": `${R / 2}px`, offset: 0.95 },
+           // and the box takes in the last of it
+           { width: `${gap}px`, height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": "0px" }],
+          { duration: ms, delay: entry === "paste" ? PASTE_FADE_MS : 0,
+            easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
+        );
+      }
       play(
         leaving
           ? [{ translate: heldTranslate, scale: heldScale, opacity: 1 },
@@ -175,12 +182,6 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
     // not the same shape as arriving somewhere.
     if (leaving) {
       const shutTo = "calc(-1 * var(--pk-send-gap)) 0";
-      // coming back, the neck reaches out to meet the box, then is swallowed as the
-      // gap closes behind it
-      root.current?.animate(
-        [{ scale: "1 0" }, { scale: ".55 .42", offset: 0.45 }, { scale: "0 .8" }],
-        { duration: SEND_OUT_MS, delay: ARROW_OUT_MS, fill: "both" },
-      );
       // The same funnel, backwards: it forms as the box starts back, and its width is
       // the gap closing — the same keyframes and curve as the box's own return, as a
       // separate animation so that nothing in between bends it off the box's edge.
@@ -189,9 +190,13 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
         [{ width: `${gap}px`, easing: "cubic-bezier(0.55, 0, 0.85, 0.35)" },
          { width: "0px", offset: 0.45 }, { width: "0px" }], back);
       plug.current?.animate(
-        [{ height: "0px", "--pk-plug-r": "0px" },
-         { height: `${PLUG_WAIST}px`, "--pk-plug-r": `${PLUG_R}px`, offset: 0.2 },
-         { height: `${PLUG_WAIST}px`, "--pk-plug-r": `${PLUG_R}px` }], back);
+        [{ height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": "0px" },
+         // it forms at the box first — the box giving back what it took —
+         { height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": `${PLUG_R / 2}px`, offset: 0.06 },
+         { height: `${PLUG_WAIST / 2}px`, "--pk-plug-rl": "0px", "--pk-plug-rr": `${PLUG_R}px`, offset: 0.14 },
+         // and reaches the block, the same height at both faces again
+         { height: `${PLUG_WAIST}px`, "--pk-plug-rl": `${PLUG_R}px`, "--pk-plug-rr": `${PLUG_R}px`, offset: 0.26 },
+         { height: `${PLUG_WAIST}px`, "--pk-plug-rl": `${PLUG_R}px`, "--pk-plug-rr": `${PLUG_R}px` }], back);
 
       play(
         [{ translate: heldTranslate, scale: heldScale, opacity: 1,
