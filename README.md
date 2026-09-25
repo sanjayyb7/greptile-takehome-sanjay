@@ -145,7 +145,7 @@ import { PasskeyField } from "./passkey";
   onResend={() => api.sendNewCode()}
   resendCooldown={60}                     // seconds before another can be asked for
   length={6}
-  onSuccess={(code) => …}
+  onSuccessAnimationComplete={() => router.push("/dashboard")}   // after the success animation
 />
 ```
 

@@ -189,6 +189,29 @@ export function PasskeySend({ passkey, falls = false, fluid = false, smooth = fa
         // a pair where both are the system answering
         const opened = parseFloat(style.getPropertyValue("--pk-smooth-ms")) || SMOOTH_MS;
         const ms = leaving ? SEND_OUT_MS : opened;
+        /*
+         * Asked to open while it was still on screen — the last digit deleted and typed
+         * again before the box had finished folding away. It turns round from wherever it
+         * actually is rather than snapping shut and starting over: from the held translate
+         * and scale, straight away (the block is not what pushes it this time), in the
+         * share of the full opening still left to cover, on the same curve. No bridge —
+         * the gap is already part-open, and a bridge grown from nothing would not reach it.
+         */
+        if (running.length) {
+          // how far it has to go: closing slides it back across the gap first and then
+          // squeezes it, so whichever of the two is further from open decides
+          const open = heldScale === "none" ? 1 : parseFloat(heldScale) || 0;
+          const back = heldTranslate === "none" ? 0 : Math.abs(parseFloat(heldTranslate)) / gap;
+          const rest = Math.min(1, Math.max(1 - open, back));
+          el.style.setProperty("--pk-arrow-delay", "0ms");
+          el.animate(
+            [{ translate: heldTranslate, scale: heldScale, opacity: 1 },
+             { translate: "0 0", scale: "1 1", opacity: 1 }],
+            { duration: Math.max(120, opened * rest),
+              easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
+          );
+          return;
+        }
         // The box does not move until the block that pushes it has reached the strip's edge:
         // opening any sooner, it was out and waiting before anything had touched it.
         const lead = (entry === "paste" ? PASTE_FADE_MS : 0) + BLOCK_REACH_MS;
