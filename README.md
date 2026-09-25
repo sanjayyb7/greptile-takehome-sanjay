@@ -1,9 +1,10 @@
 # Passcode Flow
 
-A 4-digit passcode entry, built from the supplied design in React 19 + Vite + TypeScript,
-with no animation library.
+A 4-digit passcode entry, built from the supplied design in React 19 + Vite + TypeScript.
 
-<!-- Demo video goes here -->
+
+https://github.com/user-attachments/assets/132046b3-1f38-473b-90fe-c32ec7e4d4a3
+
 
 **Live explorations:** https://passcode-explorations.vercel.app
 
