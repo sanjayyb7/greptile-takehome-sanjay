@@ -189,6 +189,19 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
       data-fail={fail ?? undefined}
       data-phase={phase === "none" ? undefined : phase}
       data-shake={shake} data-busy={passkey.busy || undefined}>
+      {/* Where the code went, before the field asks for it. Four empty boxes assume you
+          already know what they are for; this answers the two questions people arrive
+          with — what is this, and where do I look. It goes once the code is accepted: the
+          question has been answered by then. */}
+      {status !== "success" && (
+        <header className="pk-intro">
+          <h1 className="pk-intro-title">Check your email</h1>
+          <p className="pk-intro-body">
+            We&rsquo;ve sent you a temporary login code. Please check your inbox at{" "}
+            <strong>{resendTo ?? "you@example.com"}</strong>.
+          </p>
+        </header>
+      )}
       {/* the row keeps its height in every state so the strip never jumps */}
       <p className="pk-status" ref={statusRef} role="status" aria-live="polite">
         {above && (
