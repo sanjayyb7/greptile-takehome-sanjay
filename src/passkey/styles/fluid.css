@@ -27,13 +27,17 @@
   /* a little wider than the gap it spans, so its far end is always inside the box rather
      than reaching for it — a couple of pixels short and the two stop merging, which reads
      as a notch in the box's edge and a stub left behind */
-  width: calc(var(--pk-send-gap) + 10px); height: 92px; margin-top: -46px;
+  width: calc(var(--pk-send-gap) + 10px); height: 56px; margin-top: -28px;
+  /* 56 so that at the .78 it opens at, it is 44px — the caret block's own height. The
+     block is what pushes the box out, so the bulge it drives into the box's edge has to
+     be the block's size; at 92 it was half as tall again and read as something else
+     swelling out rather than the block coming through. */
   /* Square at the strip's end, rounded at the box's. It used to start inside the cell so
      that the blur's rounding still reached it, which is what put green over the cell —
      but a blur only pulls a CORNER in, not a straight edge: the half-alpha contour of a
      flat edge sits where the edge already was. Squared off, it meets the cell exactly and
      crosses nothing. */
-  border-radius: 0 12px 12px 0; background: var(--pk-focus);
+  border-radius: 0 8px 8px 0; background: var(--pk-focus);
   transform-origin: left center; scale: 0 .78; }
 
 /* The box's stand-in, at exactly the box's size and position and moving on its
