@@ -277,6 +277,14 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
   const ERASE_STEP_MS = 240;
   const ERASE_MIN_MS = 110;
   const ERASE_RAMP_MS = 30;      // each step is this much quicker than the one before
+  /**
+   * A held digit fills at one even pace, and that pace is the caret's own crossing: each
+   * next digit lands just as the block finishes arriving in its cell, so the fill is one
+   * continuous sweep. With the erase's 500ms lead it went a cell, stopped, and then ran —
+   * the first step waited out the lead while the block had long since arrived. 300 is
+   * still longer than a press: a tap types one digit.
+   */
+  const TYPE_STEP_MS = 300;
   const erasing = useRef<number[]>([]);
   /** how long until the next step, or null when no key is being held. The caret reads it
    *  so its travel can keep pace with the run instead of being cut off part-way across. */
@@ -347,7 +355,7 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
      time to cross the field. The OS rate is neither — about 30ms between repeats after a
      half-second stall, which filled all four cells in a tenth of a second and left the
      last one apparently arriving late because it was the only one anybody could see. */
-  const holdRun = useCallback((code: string, first: () => boolean) => {
+  const holdRun = useCallback((code: string, first: () => boolean, even = false) => {
     runKey.current = code;
     window.addEventListener("keyup", endRun.current);
     window.addEventListener("blur", stopRun.current);
@@ -355,14 +363,16 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
     // longer lead-in leaves the first gap twice the rest, which still reads as a catch
     const step = (gap: number, lead = false) => {
       erasing.current.push(window.setTimeout(() => {
-        const next = lead ? ERASE_STEP_MS : Math.max(ERASE_MIN_MS, gap - ERASE_RAMP_MS);
+        const next = even ? TYPE_STEP_MS
+          : lead ? ERASE_STEP_MS : Math.max(ERASE_MIN_MS, gap - ERASE_RAMP_MS);
         erasePace.current = next;        // set before the step, which is what reads it
         if (!first()) return stopErasing();
         step(next);
       }, gap));
     };
-    step(ERASE_LEAD_MS, true);   // the pace is declared by the run itself, so a single
-                                 // press still gets a full, unhurried caret travel
+    // the pace is declared by the run itself, so a single press still gets a full,
+    // unhurried caret travel
+    step(even ? TYPE_STEP_MS : ERASE_LEAD_MS, true);
   }, [stopErasing]);
 
   useEffect(() => stopErasing, [stopErasing]);
@@ -384,7 +394,7 @@ export function usePasskey({ length = 4, autoSubmit = true, stepsWhenHeld = fals
       if (i < length - 1) focusedRef.current = i + 1;
       if (latest.current.every(Boolean)) return;   // that filled it; there is no run to start
       const digit = e.key;
-      holdRun(e.code, () => typeStep(digit));
+      holdRun(e.code, () => typeStep(digit), true);
       return;
     }
     if (e.key === "Backspace" || e.key === "Delete") {
