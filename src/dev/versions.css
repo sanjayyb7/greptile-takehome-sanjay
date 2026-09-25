@@ -5,8 +5,24 @@
    It declares the two tokens it borrows from the field rather than reading them off the
    field's scope, so the two files stay independent of each other's load order. */
 .pk-versions { --pk-focus: #107a4d;
+  --sw-track: #ececec;      /* the pill the dots sit in */
+  --sw-dot: #9a9a9a;        /* a version not being shown */
+  --sw-dot-hover: #6b6b6b;
+  --sw-chosen: #1a1a1a;     /* and the one that was chosen */
+  --sw-chosen-hover: #000;
+  --sw-disc-ink: #fff;      /* the number inside the disc */
+  --sw-note: #858585;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-glide: cubic-bezier(0.45, 0, 0.55, 1);
+}
+@media (prefers-color-scheme: dark) {
+  .pk-versions { --pk-focus: #35c98a;
+    --sw-track: #1c1d20; --sw-dot: #5c5f63; --sw-dot-hover: #8b8d90;
+    /* the chosen one is the brightest thing on the row in both schemes: black on a pale
+       track, white on a dark one */
+    --sw-chosen: #ededed; --sw-chosen-hover: #fff;
+    --sw-disc-ink: #06281a; --sw-note: #8b8d90;
+  }
 }
 /* Version switch — the three versions, side by side in one build. A development
    affordance like the dial panel, not part of the field. */
@@ -17,7 +33,7 @@
    of them wide and slides between them. */
 .pk-versions-track { --pk-v-slot: 30px;
   position: relative; display: flex; align-items: center; padding: 4px;
-  background: #ececec; border-radius: 999px; }
+  background: var(--sw-track); border-radius: 999px; }
 /* the disc that marks the one being shown. A single element on a transform rather than a
    dot that grows: ten items resizing themselves on every click is a lot of layout for
    something that should read as one disc moving along a track. */
@@ -26,7 +42,7 @@
   background: var(--pk-focus);
   /* it carries the number */
   display: grid; place-items: center;
-  font-size: 13px; font-weight: 500; line-height: 1; color: #fff;
+  font-size: 13px; font-weight: 500; line-height: 1; color: var(--sw-disc-ink);
   translate: calc(var(--pk-v-at) * var(--pk-v-slot)) 0;
   /* 260, not 320: it is a small thing moving a short way, and over 300ms that reads as
      the disc taking its time rather than answering the press. --ease-glide rather than
@@ -52,7 +68,7 @@
 @keyframes pk-v-num-out { from { opacity: 1; filter: blur(0); }   to { opacity: 0; filter: blur(2px); } }
 /* black when it is sitting on the chosen one, so the row still says which that is while
    it is open — the shape carries the selection, the colour carries the decision */
-.pk-versions-disc[data-final] { background: #1a1a1a; }
+.pk-versions-disc[data-final] { background: var(--sw-chosen); }
 .pk-version-dot { position: relative; z-index: 1;
   width: var(--pk-v-slot); height: var(--pk-v-slot); padding: 0; border: 0;
   background: none; cursor: pointer; appearance: none;
@@ -60,19 +76,19 @@
 /* the dot each slot rests as. It goes as the disc arrives — not fading, cut, because a
    grey dot fading out under a solid disc is a dot nobody can see anyway */
 .pk-version-dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%;
-  background: #9a9a9a; grid-area: 1 / 1;
+  background: var(--sw-dot); grid-area: 1 / 1;
   transition: background-color 160ms var(--ease-out), opacity 120ms var(--ease-out); }
-.pk-version-dot[data-final]::before { background: #1a1a1a; }
+.pk-version-dot[data-final]::before { background: var(--sw-chosen); }
 .pk-version-dot[aria-checked="true"]::before { opacity: 0; }
 .pk-version-dot:focus-visible { outline: 2px solid var(--pk-focus); outline-offset: 2px;
   border-radius: 50%; }
 @media (hover: hover) and (pointer: fine) {
-  .pk-version-dot:not([aria-checked="true"]):hover::before { background: #6b6b6b; }
-  .pk-version-dot[data-final]:not([aria-checked="true"]):hover::before { background: #000; }
+  .pk-version-dot:not([aria-checked="true"]):hover::before { background: var(--sw-dot-hover); }
+  .pk-version-dot[data-final]:not([aria-checked="true"]):hover::before { background: var(--sw-chosen-hover); }
 }
 /* the chosen one says so in the line as well as in the dot — a colour alone is not a
    label, and it is the only thing a screen reader could not otherwise tell you */
-.pk-versions-note strong { color: #1a1a1a; font-weight: 500; }
+.pk-versions-note strong { color: var(--sw-chosen); font-weight: 500; }
 /* The line's box is reserved, not fitted. Left to size itself it ran between one line and
    four depending on which note was showing, and since the switch is anchored to the foot
    of the screen every change of length moved the track up or down — a row you are trying
@@ -85,7 +101,7 @@
    is what stops that odd one out moving the track. The line-height is a variable so the
    reservation cannot drift from it. */
 .pk-versions-note { --pk-note-lh: 18px;
-  margin: 0; color: #858585; font-size: 13px; line-height: var(--pk-note-lh);
+  margin: 0; color: var(--sw-note); font-size: 13px; line-height: var(--pk-note-lh);
   text-align: center; max-width: 40ch; min-height: calc(var(--pk-note-lh) * 3);
   animation: pk-versions-note-in 200ms var(--ease-out) both; }
 @keyframes pk-versions-note-in {

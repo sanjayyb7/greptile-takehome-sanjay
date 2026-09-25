@@ -1,6 +1,6 @@
 /* The resend line */
 
-.pk-resend { align-self: flex-start; margin: 6px 0 0; color: #858585;
+.pk-resend { align-self: flex-start; margin: 6px 0 0; color: var(--pk-muted);
   font-family: "Inter", system-ui, sans-serif; font-size: 15px; line-height: 20px; }
 /* Closer to the failure than the column's 16px gap allows, but not tucked under it. The
    message and the offer are one thought — this went wrong, here is the way on — and at a
@@ -28,7 +28,7 @@
    it becomes pressable, and never on a tick */
 .pk-resend button { animation: pk-resend-live 260ms var(--ease-out) both; }
 @keyframes pk-resend-live {
-  from { opacity: 0; color: #858585; }
+  from { opacity: 0; color: var(--pk-muted); }
   to   { opacity: 1; color: var(--pk-focus); }
 }
 

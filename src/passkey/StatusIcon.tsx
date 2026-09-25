@@ -1,7 +1,11 @@
 import { useId } from "react";
 import type { Status } from "./usePasskey";
 
-const GREEN = "#107A4D";
+/* The tokens, not the hex. The mark is drawn in SVG, so its colours come through as fill
+   and stroke rather than from a stylesheet — and spelling #107A4D here meant the one part
+   of the field that could not follow the palette into dark mode. */
+const GREEN = "var(--pk-focus)";
+const ON_GREEN = "var(--pk-on-focus)";
 
 /** the design's authenticated glyph — square wall and tick are one filled path */
 const CHECK = "M17.708 8.292a1 1 0 0 1 0 1.416l-7 7a1 1 0 0 1-1.416 0l-3-3a1 1 0 0 1 1.416-1.416L10 14.586l6.292-6.294a1 1 0 0 1 1.416 0ZM24 2v20a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h20a2 2 0 0 1 2 2Zm-2 20V2H2v20h20Z";
@@ -127,7 +131,7 @@ export function StatusIcon({ status, origin = false, filled = false }: {
         <g className="pk-check-tick">
           {/* pathLength normalises the stroke to 1, so a dash of 1 covers it exactly and
               the offset runs 1 → 0 whatever the geometry measures */}
-          <path d={TICK} fill="none" stroke={filled ? "#fff" : GREEN} strokeWidth="2"
+          <path d={TICK} fill="none" stroke={filled ? ON_GREEN : GREEN} strokeWidth="2"
             strokeLinecap="round" strokeLinejoin="round"
             pathLength="1" strokeDasharray="1" />
         </g>
