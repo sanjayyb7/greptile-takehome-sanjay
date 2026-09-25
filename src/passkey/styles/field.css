@@ -17,6 +17,16 @@
 .passkey { display: flex; flex-direction: column; align-items: center; gap: 16px;
   width: calc(var(--pk-cell-w) * var(--pk-length, 4));
   --pk-face: #fafafa; --pk-line: #e4e4e4; --pk-ink: #323232; --pk-bad: #b3261e;
+  /* The rest of the palette, named because dark mode has to answer each of them and a
+     hex buried in a rule is a hex that gets missed. */
+  --pk-muted: #858585;              /* the lines under the strip, and a dimmed digit */
+  --pk-busy-face: #f3f2f2;          /* a cell while the code is being checked */
+  --pk-on-focus: #fff;              /* whatever sits on the green: the arrow, the tick */
+  --pk-focus-deep: #0d6540;         /* the green, pressed */
+  --pk-surface: #fff;               /* the confirmation's own background */
+  --pk-scrim: rgb(0 0 0 / .28);     /* and the page behind it */
+  --pk-lift: rgb(0 0 0 / 0.25);     /* the shadow that lifts the focused cell */
+  --pk-card: 0 1px 2px rgb(0 0 0 / .04), 0 12px 32px rgb(0 0 0 / .12);
   /* locked to --pk-caret-ms: the digit is revealed by the block's passing, so the two
      have to share a midpoint. It is only a fallback — the entrance and exit each take the
      duration of the actual crossing, which is paced. */
@@ -26,3 +36,33 @@
   --pk-cell-w: 84px; --pk-send-gap: 16px; --pk-caret-ms: 300ms; --pk-digit-blur: 4px;
   /* the authenticated mark and its label resolve the same way the digits do */
   --pk-mark-blur: 8px; --pk-label-blur: 6px; }
+
+/* ---------- Dark ----------
+
+   The same field, not a second one: only the palette changes, and every rule below reads
+   it through the tokens above.
+
+   The greys are lifted rather than inverted — a cell at pure black on a black page has no
+   edge, so the face sits above the page and the line above the face, the way it does in
+   light. The green is brighter than #107a4d, which is a colour chosen to be read on white
+   and is too dark to be read on #0e0e0f; the red is lightened for the same reason. And
+   what sits ON the green inverts with it: dark ink on a bright mark. */
+@media (prefers-color-scheme: dark) {
+  .passkey {
+    --pk-face: #17181a;
+    --pk-line: #2c2e31;
+    --pk-ink: #ededed;
+    --pk-bad: #ff8078;
+    --pk-focus: #35c98a;
+    --pk-muted: #8b8d90;
+    --pk-busy-face: #1e1f22;
+    --pk-on-focus: #06281a;
+    --pk-focus-deep: #55d6a0;
+    --pk-surface: #1c1d20;
+    --pk-scrim: rgb(0 0 0 / .6);
+    /* a shadow is the absence of light, and there is none to take away — so depth is
+       carried by a lighter edge and a deeper, wider shadow instead */
+    --pk-lift: rgb(0 0 0 / 0.5);
+    --pk-card: 0 0 0 1px #2c2e31, 0 16px 40px rgb(0 0 0 / .55);
+  }
+}

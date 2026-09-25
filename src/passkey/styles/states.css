@@ -6,7 +6,7 @@
    keeps DOM focus — backspace and Enter must still land — it just stops saying so. */
 .passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-cell:focus {
   border: 3px solid var(--pk-focus); border-radius: 4px;
-  box-shadow: 0 -4px 4px rgb(0 0 0 / 0.25); }
+  box-shadow: 0 -4px 4px var(--pk-lift); }
 /* The shadow is thrown UPWARD — the design has it above the cell, not below. Light from
    under the strip, so the selected cell reads as tipped toward you rather than resting on
    the page. It is left unclipped on purpose: the strip does not cut it off, so it falls
@@ -21,9 +21,9 @@
 
 /* settled states: the strip dims and hands attention to the status line */
 .passkey[data-state="verifying"] .pk-cell,
-.passkey[data-state="success"] .pk-cell { background: #f3f2f2; }
+.passkey[data-state="success"] .pk-cell { background: var(--pk-busy-face); }
 .passkey[data-state="verifying"] .pk-digit,
-.passkey[data-state="success"] .pk-digit { color: #858585; }
+.passkey[data-state="success"] .pk-digit { color: var(--pk-muted); }
 
 
 /* wrong code: the whole strip reads as rejected, then clears itself */

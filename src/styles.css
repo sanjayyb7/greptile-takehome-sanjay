@@ -1,6 +1,7 @@
 /* the page is only a stage for the field — the design owns everything inside it */
-html { color-scheme: light; }
-body { margin: 0; background: #fff;
+/* both, so the browser dresses form controls, scrollbars and the caret to match */
+html { color-scheme: light dark; }
+body { margin: 0; background: var(--page); --page: #fff;
   font-family: "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 
 /* centring lives on the app root, not on body: anything else mounted into body — a
@@ -10,3 +11,9 @@ body { margin: 0; background: #fff;
 /* The field holds the height of its tallest state — see --pk-tallest — so the failure
    line appears in space that was already reserved rather than lifting the strip. */
 #root > .passkey { min-height: var(--pk-tallest); }
+
+/* The stage goes dark with the field. Not pure black: the cells sit a step above the page
+   and the page needs somewhere to sit below them. */
+@media (prefers-color-scheme: dark) {
+  body { --page: #0e0e0f; }
+}

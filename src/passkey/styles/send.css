@@ -10,7 +10,7 @@
    of the strip's edge, so what it is doing is pushing clear rather than appearing. */
 .pk-send { position: absolute; left: calc(100% + var(--pk-send-gap)); top: 0;
   width: var(--pk-cell-w); height: 128px; padding: 0; border: 0;
-  background: var(--pk-focus); color: #fff; border-radius: 16px; cursor: pointer;
+  background: var(--pk-focus); color: var(--pk-on-focus); border-radius: 16px; cursor: pointer;
   display: grid; place-items: center; overflow: hidden;
   transform-origin: left center;
   /* closed until the component opens it — see PasskeySend. Declared here so the box is
@@ -52,12 +52,12 @@
 /* gated: a tap on a touch screen fires a hover that then sticks, leaving the box looking
    pressed long after the finger has gone */
 @media (hover: hover) and (pointer: fine) {
-  .pk-send:hover:not([data-busy]) { background: #0d6540; }
+  .pk-send:hover:not([data-busy]) { background: var(--pk-focus-deep); }
 }
 .pk-send:active:not([data-busy]) { transform: scale(0.97); }
 .pk-send[data-busy] { cursor: default; opacity: .55;
   transition: opacity 160ms var(--ease-out); }
-.pk-send:focus-visible { outline: none; box-shadow: inset 0 0 0 3px #fff; }
+.pk-send:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--pk-on-focus); }
 .pk-send[data-leaving] { pointer-events: none; }
 /* the strip keeps its own right corner: the box stands apart from it now, so there is
    nothing for the corner to be handed over to */

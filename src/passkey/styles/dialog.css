@@ -11,14 +11,16 @@
    arrived on top of the field and can leave again. 400 keeps the question on one line,
    which is worth the extra width on its own. */
 .pk-dialog { box-sizing: border-box; width: min(400px, calc(100vw - 48px)); padding: 24px;
-  border: 0; border-radius: 18px; background: #fff; color: var(--pk-ink);
+  border: 0; border-radius: 18px; background: var(--pk-surface); color: var(--pk-ink);
   font-family: "Inter", system-ui, sans-serif;
   /* the same shadow language as the focused cell, one step further out: this is further
      from the page than a cell is */
-  box-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 12px 32px rgb(0 0 0 / .12);
+  box-shadow: var(--pk-card);
   /* it declares the tokens it uses, as the field does: it is in the top layer, outside
      .passkey, so it inherits nothing from it */
   --pk-ink: #323232; --pk-line: #e4e4e4; --pk-bad: #b3261e; --pk-focus: #107a4d;
+  --pk-surface: #fff; --pk-on-focus: #fff; --pk-scrim: rgb(0 0 0 / .28);
+  --pk-card: 0 1px 2px rgb(0 0 0 / .04), 0 12px 32px rgb(0 0 0 / .12);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   /* it is placed over the strip from JS, which needs a fixed box to write into rather
      than the centring margin a modal dialog is given by default */
@@ -28,7 +30,7 @@
 /* Lighter than a modal's usual scrim, and deliberately: the code you typed is still
    there and the dialog is a question about it, not a replacement for it. It fades on the
    box's own durations so the two arrive and leave together. */
-.pk-dialog::backdrop { background: rgb(0 0 0 / .28);
+.pk-dialog::backdrop { background: var(--pk-scrim);
   animation: pk-fade-in 380ms var(--ease-out) both; }
 .pk-dialog[data-closing]::backdrop { animation: pk-fade-out 234ms var(--ease-out) both; }
 @keyframes pk-fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -52,8 +54,8 @@
 .pk-dialog-actions button { padding: 0 18px; height: 40px; border-radius: 12px;
   font: 500 15px/1 "Inter", system-ui, sans-serif; cursor: pointer;
   transition: opacity 140ms var(--ease-out), background-color 140ms var(--ease-out); }
-.pk-dialog-cancel { border: 1px solid var(--pk-line); background: #fff; color: var(--pk-ink); }
-.pk-dialog-confirm { border: 1px solid var(--pk-focus); background: var(--pk-focus); color: #fff;
+.pk-dialog-cancel { border: 1px solid var(--pk-line); background: var(--pk-surface); color: var(--pk-ink); }
+.pk-dialog-confirm { border: 1px solid var(--pk-focus); background: var(--pk-focus); color: var(--pk-on-focus);
   /* "Sending…" is narrower than "Resend code" — held at the wider of the two so the
      button does not shrink under the pointer at the moment it stops taking presses */
   min-width: 128px; }
@@ -81,3 +83,13 @@
    it would have walked both edges once a second, which is why the other versions' line
    stays left. */
 .pk-resend { align-self: center; text-align: center; }
+
+/* The confirmation is in the top layer, so it is outside .passkey and inherits none of
+   its tokens — it carries its own copy, and its own dark answer to them. */
+@media (prefers-color-scheme: dark) {
+  .pk-dialog {
+    --pk-ink: #ededed; --pk-line: #2c2e31; --pk-bad: #ff8078; --pk-focus: #35c98a;
+    --pk-surface: #1c1d20; --pk-on-focus: #06281a; --pk-scrim: rgb(0 0 0 / .6);
+    --pk-card: 0 0 0 1px #2c2e31, 0 16px 40px rgb(0 0 0 / .55);
+  }
+}
