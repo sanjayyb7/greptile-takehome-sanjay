@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { PasskeySend, SEND_IN_MS, SEND_OUT_MS } from "./PasskeySend";
-import { PASTE_FADE_MS, PASTE_SEND_MS, SHAKE_MS } from "./timing";
+import { MARK_MS, PASTE_FADE_MS, PASTE_SEND_MS, SHAKE_MS } from "./timing";
 import type { usePasskey } from "./usePasskey";
 
 type Passkey = ReturnType<typeof usePasskey>;
@@ -359,7 +359,9 @@ export function PasskeyCells({ passkey, length, send, shakeOn }: {
   useEffect(() => {
     if (!shake || !strip.current) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const opts = { duration: SHAKE_MS, easing: "cubic-bezier(0.77, 0, 0.175, 1)" } as const;
+    // keyed to the "!" rather than the error, it runs for as long as the mark takes to write
+    const opts = { duration: shakeOn === undefined ? SHAKE_MS : MARK_MS,
+      easing: "cubic-bezier(0.77, 0, 0.175, 1)" } as const;
     strip.current.animate(SHAKE, opts);
     // no fill on any of these: each ends on the value the send box's own animations are
     // already holding, so letting them expire hands control straight back
