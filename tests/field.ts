@@ -14,10 +14,7 @@ export class Field {
   readonly resendLine: Locator;
   readonly resendLink: Locator;
   readonly sendBox: Locator;
-  readonly dialog: Locator;
-  readonly dialogConfirm: Locator;
-  readonly dialogCancel: Locator;
-  readonly dialogProblem: Locator;
+  readonly resendProblem: Locator;
 
   constructor(private page: Page) {
     this.root = page.locator(".passkey");
@@ -28,10 +25,7 @@ export class Field {
     this.resendLine = page.locator(".pk-resend");
     this.resendLink = page.locator(".pk-resend button");
     this.sendBox = page.locator(".pk-send");
-    this.dialog = page.locator(".pk-dialog");
-    this.dialogConfirm = page.locator(".pk-dialog-confirm");
-    this.dialogCancel = page.locator(".pk-dialog-cancel");
-    this.dialogProblem = page.locator(".pk-dialog-problem");
+    this.resendProblem = page.locator(".pk-resend-problem");
   }
 
   /** version 8 is the chosen one — it answers every case out loud */
@@ -73,10 +67,6 @@ export class Field {
 
   async state() { return (await this.root.getAttribute("data-state")) ?? "idle"; }
 
-  /** whether the dialog is really modal, which is the thing that traps focus */
-  async dialogOpen() {
-    return this.dialog.evaluate((el) => (el as HTMLDialogElement).open).catch(() => false);
-  }
 
   /** a code the stand-in accepts, one it refuses, and one that makes it fall over */
   static readonly GOOD = "1234";

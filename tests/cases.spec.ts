@@ -51,65 +51,32 @@ test.describe("the cases", () => {
     expect(await page.evaluate(() => (window as any).__runs)).toBe(1);
   });
 
-  test("resend opens a confirmation naming where the code goes", async ({ page }) => {
-    const f = await Field.open(page);
-    await f.resendLink.click();
-    await expect(f.dialog).toBeVisible();
-    await expect(f.dialog).toContainText("Send code to: you@example.com");
-    await expect(f.dialogCancel).toBeVisible();
-    await expect(f.dialogConfirm).toHaveText("Resend code");
-    await expect(f.dialogConfirm).toBeFocused();
-  });
-
-  test("cancelling keeps the digits and returns focus to the link", async ({ page }) => {
+  test("resend sends on the press, says so, then counts down", async ({ page }) => {
     const f = await Field.open(page);
     await f.type("12");
-    await f.resendLink.click();
-    await f.dialogCancel.click();
-    await expect.poll(() => f.dialogOpen()).toBe(false);
-    expect(await f.code()).toBe("12__");
-    await expect(f.resendLink).toBeFocused();
-  });
-
-  test("confirming disables both buttons and cannot be pressed twice", async ({ page }) => {
-    const f = await Field.open(page);
-    await f.resendLink.click();
-    await f.dialogConfirm.click();
-    await expect(f.dialogConfirm).toHaveText("Sending…");
-    await expect(f.dialogConfirm).toBeDisabled();
-    await expect(f.dialogCancel).toBeDisabled();
-  });
-
-  test("a sent code closes the dialog, says so, then counts down", async ({ page }) => {
-    const f = await Field.open(page);
-    await f.type("12");
-    await f.resendLink.click();
-    await f.dialogConfirm.click();
+    await f.resendLink.click();                                // no confirmation to get past
     await expect(f.resendLine).toHaveText("Code resent", VERDICT);
-    await expect.poll(() => f.dialogOpen()).toBe(false);
     expect(await f.code()).toBe("12__");                       // digits survive
+    expect(await f.focusedCell()).toBe(2);                     // and typing picks up where it was
     await expect(f.resendLine).toContainText("Resend in 0:", { timeout: 5000 });
   });
 
-  test("a failed send keeps the dialog open and allows a retry", async ({ page }) => {
+  test("a failed send says so, and the link stays to try again", async ({ page }) => {
     const f = await Field.open(page, "?v=8&resendfail");
     await f.resendLink.click();
-    await f.dialogConfirm.click();
-    await expect(f.dialogProblem).toHaveText("Couldn't send the code. Try again.", VERDICT);
-    await expect.poll(() => f.dialogOpen()).toBe(true);        // still there to retry in
-    await expect(f.dialogConfirm).toBeEnabled();
-    await expect(f.dialogCancel).toBeEnabled();
+    await expect(f.resendProblem).toHaveText("Couldn't send the code. Try again.", VERDICT);
     await expect(f.resendLine).toHaveText("Didn't get a code? Resend");  // nothing spent
-    await f.dialogConfirm.click();                             // and the retry goes
+    await f.resendLink.click();                                // and the retry goes
     await expect(f.resendLine).toHaveText("Code resent", VERDICT);
+    await expect(f.resendProblem).toHaveCount(0);
   });
 
   test("the cooldown disables only the resend", async ({ page }) => {
     const f = await Field.open(page);
     await f.resendLink.click();
-    await f.dialogConfirm.click();
     await expect(f.resendLine).toContainText("Resend in 0:", { timeout: 8000 });
     await expect(f.resendLink).toHaveCount(0);                 // no way to ask again
+    await f.cells.first().click();
     await f.type(Field.GOOD);                                  // but entry is untouched
     expect(await f.code()).toBe(Field.GOOD);
     await f.press("Enter");                                    // and so is verification

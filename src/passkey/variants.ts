@@ -273,7 +273,7 @@ const flatFocus = (v: Version) => v === 14;
  * mistake and costs something; here the line itself says what happened — "Code resent",
  * then the wait — which is the whole of the feedback the press needs.
  */
-const resendsDirectly = (v: Version) => v === 14;
+const resendsDirectly = (v: Version) => v === 8 || v === 14;
 
 /**
  * One piece of green carries the whole transaction.
