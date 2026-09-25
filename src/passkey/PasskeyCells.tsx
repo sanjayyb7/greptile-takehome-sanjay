@@ -340,12 +340,19 @@ const WipeHalf = forwardRef<HTMLSpanElement, { wipe: Wipe; cell: number }>(
  * screen-reader label — with the glyph painted in a decorative layer on top, because an
  * input's own text can't be animated.
  */
-export function PasskeyCells({ passkey, length, send }: {
+export function PasskeyCells({ passkey, length, send, shakeOn }: {
   passkey: Passkey; length: number; send?: boolean;
+  /**
+   * What the shake is keyed on. A refusal closes the loader into a "!", and the strip
+   * shakes when that mark lands rather than when the error arrives, so the two read as
+   * one event; 0 means "not now".
+   */
+  shakeOn?: number;
 }) {
-  const { digits, stamps, status, shake, busy, focused, cells, write, onKeyDown, onPaste, onFocus, onBlur, erasePace, entry, stale, picked, pick } = passkey;
+  const { digits, stamps, status, shake: rejected, busy, focused, cells, write, onKeyDown, onPaste, onFocus, onBlur, erasePace, entry, stale, picked, pick } = passkey;
   const strip = useRef<HTMLDivElement>(null);
 
+  const shake = shakeOn ?? rejected;
   // WAAPI, not CSS: a counter in an attribute doesn't restart a CSS animation — going from
   // data-shake="1" to "2" leaves the selector already matching, so only the first rejection
   // ever played. This restarts on every one, and retargets if they land back to back.

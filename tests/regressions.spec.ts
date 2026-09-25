@@ -95,7 +95,7 @@ test.describe("regressions", () => {
     const f = await Field.open(page);
     await f.type(Field.WRONG);
     await f.press("Enter");
-    await expect(f.problem).toHaveText("Incorrect code. Try again.", VERDICT);
+    await expect(f.problem).toHaveText("Incorrect code", VERDICT);
     await expect(f.sendBox).toHaveCount(0);        // withheld, because the code was refused
     await f.paste(Field.GOOD);
     await expect.poll(() => f.code()).toBe(Field.GOOD);
@@ -131,11 +131,11 @@ test.describe("regressions", () => {
     const f = await Field.open(page);
     await f.type(Field.OFFLINE);
     await f.press("Enter");
-    await expect(f.problem).toHaveText("Couldn't verify your code. Try again.", VERDICT);
+    await expect(f.problem).toHaveText("Not verified", VERDICT);
     await f.press("Enter");
     await expect.poll(() => f.state()).toBe("verifying");
     await expect(f.problem).toHaveCount(0);                  // nothing left over underneath
-    await expect(f.problem).toHaveText("Couldn't verify your code. Try again.", VERDICT);
+    await expect(f.problem).toHaveText("Not verified", VERDICT);
   });
 
   test("Backspace after a rejection clears in place, then steps back", async ({ page }) => {
@@ -146,7 +146,7 @@ test.describe("regressions", () => {
     const f = await Field.open(page);
     await f.type(Field.WRONG);
     await f.press("Enter");
-    await expect(f.problem).toHaveText("Incorrect code. Try again.", VERDICT);
+    await expect(f.problem).toHaveText("Incorrect code", VERDICT);
     expect(await f.focusedCell()).toBe(3);        // the rejection hands the caret back
 
     await f.press("Backspace");                   // a filled cell: cleared, caret stays
@@ -191,7 +191,7 @@ test.describe("regressions", () => {
     expect(fits.stripWidth).toBe(fits.fieldWidth);
     await f.type("123");
     await f.press("Enter");
-    await expect(f.problem).toHaveText("Enter all 6 digits.");   // the copy counts too
+    await expect(f.problem).toHaveText("Missing digits");
   });
 
 });

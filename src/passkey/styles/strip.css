@@ -46,20 +46,14 @@
 .passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within[data-edge="first"] .pk-clip { left: 3px; }
 .passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within[data-edge="last"] .pk-clip { right: 3px; }
 
-/* The field holds the height of its tallest state, so a rejection cannot move the cells.
-
-   The failure line is 22px with a 16px gap above it, and the field is centred in the
-   viewport — so adding it lifted the strip by half of that, 19px, at the exact moment the
-   code you are about to retype should be the one thing you can rely on to stay still.
-
-   Summed rather than measured, so it can be read: the status row, the strip, the failure
-   line, the resend line and its 6px offset, and the three gaps between the four of them.
-   The message now appears in space that was already reserved, and only the resend line
-   below it moves.
+/* The field holds one height in every state, so nothing arriving or leaving can move the
+   cells: the status row, the strip, the resend line and its 6px offset, and the two gaps
+   between the three of them. A refusal is said in the status row, which is always
+   reserved, so there is no line under the strip to make room for.
 
    It is a variable rather than a literal because the page needs the same number to hold
    the field's slot — see src/styles.css. */
-.passkey { --pk-tallest: calc(32px + 128px + 22px + 20px + 6px + 3 * 16px); }
+.passkey { --pk-tallest: calc(32px + 128px + 20px + 6px + 2 * 16px); }
 .passkey { min-height: var(--pk-tallest); }
 
 /* The block is placed from the clip's own inset rather than from a constant that assumed

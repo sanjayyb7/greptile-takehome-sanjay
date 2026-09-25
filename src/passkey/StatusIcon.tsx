@@ -62,17 +62,22 @@ const SPOKES = [
  */
 const SPINNER = "M14 1v4a1 1 0 1 1-2 0V1a1 1 0 1 1 2 0Zm4.656 7.344a1 1 0 0 0 .708-.294l2.828-2.828a1 1 0 1 0-1.414-1.415L17.95 6.636a1 1 0 0 0 .707 1.708ZM25 12h-4a1 1 0 1 0 0 2h4a1 1 0 1 0 0-2Zm-5.636 5.95a1 1 0 0 0-1.414 1.414l2.828 2.828a1 1 0 0 0 1.414-1.414l-2.828-2.828ZM13 20a1 1 0 0 0-1 1v4a1 1 0 1 0 2 0v-4a1 1 0 0 0-1-1Zm-6.364-2.05-2.829 2.828a1 1 0 1 0 1.415 1.414l2.828-2.828a1 1 0 0 0-1.414-1.414ZM6 13a1 1 0 0 0-1-1H1a1 1 0 1 0 0 2h4a1 1 0 0 0 1-1Zm-.778-9.193A1 1 0 0 0 3.807 5.222L6.636 8.05A1 1 0 0 0 8.05 6.636L5.222 3.807Z";
 
-export function StatusIcon({ status, origin = false, filled = false }: {
+export function StatusIcon({ status, origin = false, filled = false, fail = null }: {
   status: Status; origin?: boolean;
   /** the mark closes into a solid box instead of arriving as an outline — see filledMark */
   filled?: boolean;
+  /**
+   * A refusal closing the same way a success does. "closing" keeps the spinner on screen
+   * while its spokes gather, "mark" opens the dot into a red "!".
+   */
+  fail?: "closing" | "mark" | null;
 }) {
   /* Before the early return, because a hook has to run on every render. Generated rather
      than written out: the tick is revealed by a clipPath referenced by id, and two fields
      on a page would define the same id twice — both ticks would then be clipped by the
      first field's path. */
   const clipId = useId();
-  if (status !== "verifying" && status !== "success") return null;
+  if (status !== "verifying" && status !== "success" && !fail) return null;
 
   if (origin) {
     return (
@@ -136,6 +141,20 @@ export function StatusIcon({ status, origin = false, filled = false }: {
             pathLength="1" strokeDasharray="1" />
         </g>
       </svg>
+      {/* The refusal's mark, opening out of the same dot. Rendered through the close as
+          well as after it, so its entrance is a transition from where it already is
+          rather than a thing appearing. Written the way a hand writes it: the stem is
+          traced first, the full stop last. */}
+      {fail && (
+        <svg className="pk-bang" viewBox="0 0 24 24" width="24" height="24"
+          xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <g className="pk-bang-glyph">
+            <path className="pk-bang-stem" d="M12 4.5L12 14.5" fill="none" stroke="var(--pk-bad)"
+              strokeWidth="2.4" strokeLinecap="round" pathLength="1" strokeDasharray="1" />
+            <circle className="pk-bang-dot" cx="12" cy="19.3" r="1.3" fill="var(--pk-bad)" />
+          </g>
+        </svg>
+      )}
     </span>
   );
 }

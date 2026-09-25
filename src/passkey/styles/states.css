@@ -26,38 +26,55 @@
 .passkey[data-state="success"] .pk-digit { color: var(--pk-muted); }
 
 
-/* wrong code: the whole strip reads as rejected, then clears itself */
-.passkey[data-state="error"] .pk-cell { border-color: var(--pk-bad); caret-color: var(--pk-bad); }
-/* ...but not where we draw our own. The native caret is shown in red here because, in the
-   versions that hide theirs on a filled cell, it is the only pointer left once a complete
-   code is refused. Where there is an edit caret it is a second one, and two pointers in a
-   cell is one more than the cell has meanings. */
-.passkey[data-state="error"] .pk-cell { caret-color: transparent; }
-.passkey[data-state="error"] .pk-digit { color: var(--pk-bad); }
-.passkey[data-state="error"] .pk-cell:focus { border-color: var(--pk-bad); box-shadow: none; }
+/* ---------- A refusal: the loader closes into a red "!" ----------
 
-/* The colour arrives on the same frame as the movement.
+   The red belongs to the mark and to the cell the caret is in; the other cells stay
+   neutral and the digits stay dark and where they are. The native caret is hidden: the
+   edit caret is the pointer, and two in a cell is one more than the cell has meanings. */
+.passkey[data-state="error"] .pk-cell { border-color: var(--pk-line); caret-color: transparent; }
+.passkey[data-state="error"] .pk-digit { color: var(--pk-ink); }
 
-   .pk-cell transitions border-color over 150ms, which is right for the focus ring and
-   wrong for this: measured, the red took 184ms to arrive and was still fading 124ms after
-   the shake had stopped, so the one event this was built to be came apart into a shake,
-   then a red, then a red sitting on a strip that had gone still. Dropped for the error
-   state alone — the ring keeps its own timing everywhere else. */
-.passkey[data-state="error"] .pk-cell { transition: background-color .2s ease; }
+/* The spinner stays through the close. Without this it vanished at the error and the
+   gather ran invisibly. The spokes run a success's own 280ms gather and stay green. */
+.passkey[data-fail] .pk-spinner { opacity: 1; }
+.passkey[data-fail] .pk-spoke { animation: pk-v2-gather 280ms var(--ease-glide) forwards; }
+/* the success mark has no business here, not even its tick's round cap */
+.passkey[data-fail] .pk-check { opacity: 0; }
 
-/* The rejection as a moment rather than a state.
+/* At the mark the spinner blurs out, and the "!" opens from the dot at the dot's size:
+   .12 of 24px is the ~3px the eight spokes closed into. */
+.passkey[data-fail="mark"] .pk-spinner { opacity: 0; filter: blur(4px);
+  transition: opacity 160ms var(--ease-out), filter 160ms var(--ease-out); }
 
-   While it flashes, every cell is red — the selected one included. A green ring inside a
-   red strip says two things at once, and the one it says loudest is the wrong one.
-   The selection is still shown, in the same shape; only the colour changes. */
-.passkey[data-flash]:not([data-busy]) .pk-strip .pk-cell:focus {
-  border: 3px solid var(--pk-bad); border-radius: 4px; box-shadow: none; }
+.pk-bang-glyph { transform-box: view-box; transform-origin: 12px 12px; scale: .12; }
+.pk-bang-stem { stroke-dashoffset: 1; }
+.pk-bang-dot { transform-box: fill-box; transform-origin: 50% 50%; scale: 0; }
+.pk-bang { opacity: 0; }
 
-/* And once it is over the field is itself again, with the last cell selected and ready.
-   The line underneath still says what happened; it does not need the strip to repeat it. */
-.passkey[data-state="error"]:not([data-flash]) .pk-cell {
-  border-color: var(--pk-line); caret-color: transparent; }
-.passkey[data-state="error"]:not([data-flash]) .pk-digit { color: var(--pk-ink); }
+.passkey[data-fail="mark"] .pk-bang { opacity: 1; }
+.passkey[data-fail="mark"] .pk-bang-glyph { scale: 1; transition: scale 160ms var(--ease-out); }
+/* the stem is traced like the tick, a pen at a steady speed, after the glyph has opened */
+.passkey[data-fail="mark"] .pk-bang-stem { stroke-dashoffset: 0;
+  transition: stroke-dashoffset 200ms linear 160ms; }
+/* and the full stop last, with a little overshoot, the way a hand writes one */
+.passkey[data-fail="mark"] .pk-bang-dot { scale: 1;
+  transition: scale 220ms cubic-bezier(.34, 1.56, .64, 1) 360ms; }
+/* a code with a gap never had a loader, so its "!" mounts already at the mark — these
+   give it the same entrance from the dot it would have had */
+@starting-style {
+  .passkey[data-fail="mark"] .pk-bang-glyph { scale: .12; }
+  .passkey[data-fail="mark"] .pk-bang-stem { stroke-dashoffset: 1; }
+  .passkey[data-fail="mark"] .pk-bang-dot { scale: 0; }
+}
+
+/* Everything red lands on that same frame: the label that has just arrived, the focused
+   cell's ring and a soft glow, and the caret. No transition on the ring — a 150ms fade
+   into red would land after the mark rather than with it. */
+.passkey[data-fail="mark"] .pk-status-text:not([data-leaving]) { color: var(--pk-bad); }
+.passkey[data-fail="mark"]:not([data-busy]) .pk-strip:not([data-parked]) .pk-cell:focus {
+  border-color: var(--pk-bad); transition: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--pk-bad) var(--pk-bad-glow), transparent); }
+.passkey[data-fail="mark"] .pk-caret { background: var(--pk-bad); }
 
 /* the rejection shake is run from PasskeyCells via WAAPI — see the note there */
 
@@ -90,7 +107,10 @@
      rule below on specificity */
   .passkey[data-phase] .pk-spoke { animation: none; opacity: 0; }
   .passkey[data-phase] .pk-strip { animation: none; opacity: 0; }
-  .pk-problem, .pk-status-text, .pk-send, .pk-send svg { animation: none; }
+  .pk-status-text, .pk-send, .pk-send svg { animation: none; }
+  .passkey[data-fail="mark"] .pk-bang-glyph,
+  .passkey[data-fail="mark"] .pk-bang-stem,
+  .passkey[data-fail="mark"] .pk-bang-dot { transition: none; }
   /* the box opens and closes from JS, which skips it entirely under reduced motion —
      so the closed state it starts from has to be undone here or it never shows */
   .pk-send { scale: 1 1; }

@@ -8,7 +8,6 @@
    read as one block of small print. Twelve is near enough to belong and far enough to be
    a second sentence. Only when there IS a message: with none, the offer belongs at arm's
    length from the cells. */
-.pk-problem + .pk-resend { margin-top: -4px; }
 .pk-resend button { padding: 0; border: 0; background: none; font: inherit; cursor: pointer;
   color: var(--pk-focus); text-decoration: underline; text-underline-offset: 3px;
   transition: opacity .15s ease; }

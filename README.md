@@ -142,8 +142,8 @@ function SignIn() {
     <PasskeyField
       // Check the code. Resolve true to accept, false to refuse — and REJECT if the
       // check could not be made at all. The field keeps those apart: a refusal says
-      // "Incorrect code", a rejection says "Couldn't verify your code", and only one
-      // of them means retype it.
+      // "Incorrect code", a rejection says "Not verified", and only one of them means
+      // retype it.
       onVerify={async (code) => {
         const res = await fetch("/api/verify", {
           method: "POST",

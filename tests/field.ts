@@ -22,7 +22,9 @@ export class Field {
   constructor(private page: Page) {
     this.root = page.locator(".passkey");
     this.cells = page.locator(".passkey input");
-    this.problem = page.locator(".pk-problem");
+    // the verdict the status row says once a refusal's "!" has landed — and nothing while
+    // the loader is still closing, or when there is no refusal at all
+    this.problem = page.locator('.passkey[data-fail="mark"] .pk-status-text:not([data-leaving])');
     this.resendLine = page.locator(".pk-resend");
     this.resendLink = page.locator(".pk-resend button");
     this.sendBox = page.locator(".pk-send");

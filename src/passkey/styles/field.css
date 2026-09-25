@@ -26,6 +26,7 @@
   --pk-surface: #fff;               /* the confirmation's own background */
   --pk-scrim: rgb(0 0 0 / .28);     /* and the page behind it */
   --pk-lift: rgb(0 0 0 / 0.25);     /* the shadow that lifts the focused cell */
+  --pk-bad-glow: 12%;               /* how much red the refused cell's halo carries */
   --pk-card: 0 1px 2px rgb(0 0 0 / .04), 0 12px 32px rgb(0 0 0 / .12);
   /* locked to --pk-caret-ms: the digit is revealed by the block's passing, so the two
      have to share a midpoint. It is only a fallback — the entrance and exit each take the
@@ -65,5 +66,8 @@
     /* a shadow is the absence of light, and there is none to take away — so depth is
        carried by a lighter edge and a deeper, wider shadow instead */
   --pk-lift: rgb(0 0 0 / 0.5);
+    /* 12% red over near-black is a dull brown and reads as a grey box round the cell;
+       it needs more of the red to read as the same red halo it is in light */
+  --pk-bad-glow: 30%;
   --pk-card: 0 0 0 1px #2c2e31, 0 16px 40px rgb(0 0 0 / .55);
 }
