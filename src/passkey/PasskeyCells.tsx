@@ -61,6 +61,24 @@ const CARET_MS = 300;
 
 
 
+/**
+ * How a written digit arrives, read off the field so the dev dials can tune it live:
+ * when it starts to show (as a fraction of the crossing), the opacity and scale it starts
+ * from, and the curve it shares with the block. The defaults are the shipped values.
+ */
+function writing(style: CSSStyleDeclaration) {
+  const num = (name: string, fallback: number) => {
+    const v = parseFloat(style.getPropertyValue(name));
+    return Number.isFinite(v) ? v : fallback;
+  };
+  return {
+    at: Math.min(0.95, Math.max(0, num("--pk-write-at", 0.5))),
+    opacity: num("--pk-write-opacity", 0),
+    scale: String(num("--pk-write-scale", 0.5)),
+    ease: style.getPropertyValue("--pk-write-ease").trim() || "ease-in-out",
+  };
+}
+
 function caretMs(el: Element | null) {
   if (!el) return CARET_MS;
   const v = getComputedStyle(el).getPropertyValue("--pk-caret-ms").trim();
@@ -124,6 +142,7 @@ function Digit(
     if (el && !still) {
       const style = getComputedStyle(el);
       const blur = style.getPropertyValue("--pk-digit-blur").trim() || "4px";
+      const w = writing(style);
       // The long exit: it does not fade at all. It slides down the whole height of the
       // cell and the cell's own edge is what takes it — which is the difference between
       // a digit disappearing and a digit going somewhere.
@@ -140,12 +159,12 @@ function Digit(
         el.animate(
           written
             ? [{ opacity: 1, scale: "1" },
-               { opacity: 0, scale: "0.5", offset: 0.5 },
-               { opacity: 0, scale: "0.5" }]
+               { opacity: w.opacity, scale: w.scale, offset: 1 - w.at },
+               { opacity: w.opacity, scale: w.scale }]
             : [{ opacity: 1, filter: "blur(0)" },
                { opacity: 1, offset: 0.7 },
                { opacity: 0, filter: `blur(${blur})` }],
-          { duration: ms, easing: "ease-in-out", fill: "both" },
+          { duration: ms, easing: written ? w.ease : "ease-in-out", fill: "both" },
         );
       }
     }
@@ -222,11 +241,12 @@ function Digit(
      * whole of it and not merely at the ends.
      */
     if (written) {
+      const w = writing(style);
       el.animate(
-        [held ?? { opacity: 0, scale: "0.5", translate: "0 0", filter: "blur(0)" },
-         { opacity: 0, scale: "0.5", offset: 0.5 },
+        [held ?? { opacity: w.opacity, scale: w.scale, translate: "0 0", filter: "blur(0)" },
+         { opacity: w.opacity, scale: w.scale, offset: w.at },
          { opacity: 1, scale: "1", translate: "0 0", filter: "blur(0)" }],
-        { duration: ms, easing: "ease-in-out", fill: "both" },
+        { duration: ms, easing: w.ease, fill: "both" },
       );
       return;
     }
@@ -307,6 +327,10 @@ function useWipe(
    * event competing with the one that matters.
    */
   hushFromBox: boolean,
+  /** where the crossing's length is read from. Not the wipe's own element: that only
+   *  exists while a wipe does, so at the start of one it was always null and every
+   *  crossing fell back to the 300ms constant, whatever --pk-caret-ms said. */
+  timing: React.RefObject<HTMLElement | null>,
 ) {
   const ref = useRef<HTMLElement | null>(null);
   const [at, setAt] = useState(index);
@@ -343,7 +367,7 @@ function useWipe(
       const fromBox = at === sendSlot;
       // erasing takes exactly as long as writing: a crossing is a crossing, whichever
       // way it is going, and the digit's exit is locked to it either way
-      const full = caretMs(ref.current);
+      const full = caretMs(timing.current ?? ref.current);
       const ms = toBox ? (pasted ? PASTE_SEND_MS : SEND_IN_MS)
         : fromBox ? SEND_OUT_MS
         : gap === null ? full
@@ -474,7 +498,7 @@ export function PasskeyCells({ passkey, length, send, written, fadeIn, vanish, c
   // leaves the caret to move on its own in the three versions that predate the block
   const wipes = caret === "wipe";
   const { wipe, ref: wipeRef } = useWipe(busy || !wipes ? null : caretAt, erasePace, length,
-    entry === "paste", refused);
+    entry === "paste", refused, strip);
 
   return (
     <div className="pk-strip" ref={strip} onPaste={onPaste} data-send={showSend ? "on" : undefined}

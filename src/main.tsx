@@ -3,8 +3,13 @@ import { createRoot } from "react-dom/client";
 import { PasskeyField } from "./passkey";
 import { VersionDots } from "./dev/VersionDots";
 import { ThemeToggle } from "./dev/ThemeToggle";
+import { mountDigitDials } from "./dev/DigitDials";
 import { FINAL, VERSIONS, hasSend, type Version } from "./passkey/variants";
 import "./styles.css";
+
+// the tuning panel for how digits are written in; kept out of automated runs, where it
+// would only be something on screen the tests did not put there
+if (!navigator.webdriver) mountDigitDials();
 
 /** on this branch the Send button submits; ?auto goes back to submitting on the last digit */
 const auto = new URLSearchParams(location.search).has("auto");
