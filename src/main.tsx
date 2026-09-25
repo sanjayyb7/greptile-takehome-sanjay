@@ -21,7 +21,6 @@ function Demo() {
   );
   return (
     <>
-      <ThemeToggle />
       {/* keyed on the version: switching remounts the field, so each one is tried from a
           clean slate rather than inheriting half-finished state from the last */}
       <PasskeyField
@@ -34,7 +33,7 @@ function Demo() {
         send={!auto && hasSend(version)}
         onSuccess={(code) => console.log("authenticated:", code)}
       />
-      <VersionDots value={version} onChange={setVersion} />
+      <VersionDots value={version} onChange={setVersion} beside={<ThemeToggle />} />
     </>
   );
 }

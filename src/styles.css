@@ -30,10 +30,13 @@ body { margin: 0; background: var(--page); --page: #fff;
    and the page needs somewhere to sit below them. */
 :root[data-theme="dark"] body { --page: #0e0e0f; }
 
-/* The light/dark switch. Bottom left, opposite the version row's own corner and clear of
-   the field, and out of the flow so the field stays centred on the page rather than on
-   what is left of it. */
-.theme-toggle { position: fixed; bottom: 20px; left: 20px; z-index: 10;
+/* The light/dark switch, beside the version track.
+   Absolute against .pk-versions-row rather than a flex child of it: as a child it would
+   have taken width from the row and pushed the track off the page's centre, and the track
+   is the thing the field is lined up with. Hung off the right edge instead, it costs the
+   track nothing. */
+.theme-toggle { position: absolute; left: 100%; margin-left: 10px;
+  top: 50%; translate: 0 -50%;
   width: 36px; height: 36px; display: grid; place-items: center;
   padding: 0; border: 1px solid var(--pk-line, #e4e4e4); border-radius: 10px;
   background: none; color: #858585; cursor: pointer;

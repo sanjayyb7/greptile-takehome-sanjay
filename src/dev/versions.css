@@ -29,6 +29,9 @@
 /* The track: one slot per exploration, all the same width, so the row can be counted and
    nothing re-lays out when the selection moves. --pk-v-slot is the slot; the disc is one
    of them wide and slides between them. */
+/* the row the track sits in. Only as wide as the track, so the track stays the centre of
+   the page and anything beside it hangs off the edge. */
+.pk-versions-row { position: relative; display: flex; }
 .pk-versions-track { --pk-v-slot: 30px;
   position: relative; display: flex; align-items: center; padding: 4px;
   background: var(--sw-track); border-radius: 999px; }

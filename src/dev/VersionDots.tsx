@@ -31,9 +31,11 @@ const nameOf = (i: number) => VERSIONS[i]?.label ?? String(i + 1);
  * only its value changes, which it does by resolving in place: the old one softens and
  * goes, the new one comes up out of the blur behind it.
  */
-export function VersionDots({ value, onChange }: {
+export function VersionDots({ value, onChange, beside }: {
   value: Version;
   onChange: (v: Version) => void;
+  /** anything that belongs beside the track — the theme switch, here */
+  beside?: React.ReactNode;
 }) {
   const at = VERSIONS.findIndex((v) => v.id === value);
   const current = VERSIONS[at];
@@ -55,6 +57,9 @@ export function VersionDots({ value, onChange }: {
   }, [outgoing]);
   return (
     <div className="pk-versions">
+      {/* the track keeps the middle of the page to itself; whatever sits beside it hangs
+          off its edge rather than sharing the row, so adding one does not move the other */}
+      <div className="pk-versions-row">
       <div className="pk-versions-track" role="radiogroup" aria-label="Version">
         {/* the disc, under the numbers and over the dots. Black when what it is sitting
             on is the chosen one, so the row still says which that is while it is open */}
@@ -90,6 +95,8 @@ export function VersionDots({ value, onChange }: {
             }}
           />
         ))}
+      </div>
+        {beside}
       </div>
       {/* keyed so the line changes over rather than swapping in place */}
       <p className="pk-versions-note" key={value} aria-hidden="true">
