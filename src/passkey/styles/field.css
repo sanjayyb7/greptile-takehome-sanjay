@@ -39,6 +39,9 @@
 
 /* ---------- Dark ----------
 
+   Asked for, not detected: the page sets data-theme and the field answers. Light is what
+   it is without being told, which is what the design is drawn in.
+
    The same field, not a second one: only the palette changes, and every rule below reads
    it through the tokens above.
 
@@ -47,22 +50,20 @@
    light. The green is brighter than #107a4d, which is a colour chosen to be read on white
    and is too dark to be read on #0e0e0f; the red is lightened for the same reason. And
    what sits ON the green inverts with it: dark ink on a bright mark. */
-@media (prefers-color-scheme: dark) {
-  .passkey {
-    --pk-face: #17181a;
-    --pk-line: #2c2e31;
-    --pk-ink: #ededed;
-    --pk-bad: #ff8078;
-    --pk-focus: #35c98a;
-    --pk-muted: #8b8d90;
-    --pk-busy-face: #1e1f22;
-    --pk-on-focus: #06281a;
-    --pk-focus-deep: #55d6a0;
-    --pk-surface: #1c1d20;
-    --pk-scrim: rgb(0 0 0 / .6);
+:root[data-theme="dark"] .passkey {
+  --pk-face: #17181a;
+  --pk-line: #2c2e31;
+  --pk-ink: #ededed;
+  --pk-bad: #ff8078;
+  --pk-focus: #35c98a;
+  --pk-muted: #8b8d90;
+  --pk-busy-face: #1e1f22;
+  --pk-on-focus: #06281a;
+  --pk-focus-deep: #55d6a0;
+  --pk-surface: #1c1d20;
+  --pk-scrim: rgb(0 0 0 / .6);
     /* a shadow is the absence of light, and there is none to take away — so depth is
        carried by a lighter edge and a deeper, wider shadow instead */
-    --pk-lift: rgb(0 0 0 / 0.5);
-    --pk-card: 0 0 0 1px #2c2e31, 0 16px 40px rgb(0 0 0 / .55);
-  }
+  --pk-lift: rgb(0 0 0 / 0.5);
+  --pk-card: 0 0 0 1px #2c2e31, 0 16px 40px rgb(0 0 0 / .55);
 }
