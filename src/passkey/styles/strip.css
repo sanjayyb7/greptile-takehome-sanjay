@@ -9,6 +9,14 @@
   transition: background-color .2s ease, border-color .15s ease; }
 .pk-cell::selection { background: transparent; }
 .pk-slot + .pk-slot .pk-cell { border-left: none; }
+/* The ring sits inside its own cell, so it would stand in for that cell's right divider
+   and butt straight onto the face beside it. The cell after a focused one draws its own
+   left divider instead, so the ring has a clean cut on both sides, as in the design.
+   It is also lifted to the focused cell's level, and comes later, so it paints over the
+   ring's shadow: in the design the shadow falls on the cell before and not the one after. */
+.passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within + .pk-slot { z-index: 1; }
+.passkey:not([data-busy]) .pk-strip:not([data-parked]) .pk-slot:focus-within + .pk-slot .pk-cell {
+  border-left: 1px solid var(--pk-line); }
 /* keyed off an explicit edge marker, not :first-child/:last-child — the caret is also a
    child of the strip, so DOM position stopped identifying the end cells */
 .pk-slot[data-edge="first"] .pk-cell { border-radius: 16px 0 0 16px; }
