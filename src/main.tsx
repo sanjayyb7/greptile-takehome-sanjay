@@ -2,6 +2,7 @@ import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { PasskeyField } from "./passkey";
 import { VersionDots } from "./dev/VersionDots";
+import { ThemeToggle } from "./dev/ThemeToggle";
 import { FINAL, VERSIONS, hasSend, type Version } from "./passkey/variants";
 import "./styles.css";
 
@@ -20,6 +21,7 @@ function Demo() {
   );
   return (
     <>
+      <ThemeToggle />
       {/* keyed on the version: switching remounts the field, so each one is tried from a
           clean slate rather than inheriting half-finished state from the last */}
       <PasskeyField

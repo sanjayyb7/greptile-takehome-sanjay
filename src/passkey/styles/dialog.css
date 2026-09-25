@@ -87,10 +87,8 @@
 
 /* The confirmation is in the top layer, so it is outside .passkey and inherits none of
    its tokens — it carries its own copy, and its own dark answer to them. */
-@media (prefers-color-scheme: dark) {
-  .pk-dialog {
-    --pk-ink: #ededed; --pk-line: #2c2e31; --pk-bad: #ff8078; --pk-focus: #35c98a;
-    --pk-surface: #1c1d20; --pk-on-focus: #06281a; --pk-scrim: rgb(0 0 0 / .6);
-    --pk-card: 0 0 0 1px #2c2e31, 0 16px 40px rgb(0 0 0 / .55);
-  }
+:root[data-theme="dark"] .pk-dialog {
+  --pk-ink: #ededed; --pk-line: #2c2e31; --pk-bad: #ff8078; --pk-focus: #35c98a;
+  --pk-surface: #1c1d20; --pk-on-focus: #06281a; --pk-scrim: rgb(0 0 0 / .6);
+  --pk-card: 0 0 0 1px #2c2e31, 0 16px 40px rgb(0 0 0 / .55);
 }

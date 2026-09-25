@@ -15,14 +15,12 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-glide: cubic-bezier(0.45, 0, 0.55, 1);
 }
-@media (prefers-color-scheme: dark) {
-  .pk-versions { --pk-focus: #35c98a;
+:root[data-theme="dark"] .pk-versions { --pk-focus: #35c98a;
     --sw-track: #1c1d20; --sw-dot: #5c5f63; --sw-dot-hover: #8b8d90;
     /* the chosen one is the brightest thing on the row in both schemes: black on a pale
        track, white on a dark one */
     --sw-chosen: #ededed; --sw-chosen-hover: #fff;
     --sw-disc-ink: #06281a; --sw-note: #8b8d90;
-  }
 }
 /* Version switch — the three versions, side by side in one build. A development
    affordance like the dial panel, not part of the field. */
