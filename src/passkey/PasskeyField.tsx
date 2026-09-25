@@ -57,7 +57,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
   /** ask for a new code, and how long before another can be asked for */
   onResend?: () => Promise<unknown>;
   resendCooldown?: number;
-  /** where a new code is sent — named in the confirmation, where it is the whole point */
+  /** where the code is sent — named in the heading above the field */
   resendTo?: string;
   /** the code was accepted — the moment the check answers, while the success animation
    *  is only starting */
@@ -230,7 +230,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
           status line travels down into, so it is faded rather than removed */}
       <PasskeyCells passkey={passkey} length={length} send={send}
         shakeOn={fail === "mark" ? shake : 0} />
-      <PasskeyResend passkey={passkey} to={resendTo} />
+      <PasskeyResend passkey={passkey} />
     </div>
   );
 }

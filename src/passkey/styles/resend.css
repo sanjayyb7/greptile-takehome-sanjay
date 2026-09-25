@@ -32,3 +32,13 @@
 }
 
 /* the strip — one slot per cell; the input carries the box, a layer above carries the glyph */
+
+/* Centred on the strip, because the lines are the field's own voice rather than a caption
+   under it. Safe only because nothing here reflows as it changes: the wait is written as
+   a clock — "Resend in 0:30" through "0:01", tabular — so neither edge moves as it ticks. */
+.pk-resend { align-self: center; text-align: center; }
+
+/* a resend that did not go: said under the line, in red, with the link above it still
+   there to try again */
+.pk-resend-problem { align-self: center; margin: -8px 0 0; color: var(--pk-bad);
+  font-size: 14px; line-height: 20px; text-align: center; }
