@@ -32,7 +32,7 @@ npx playwright install chromium   # once
 npm test
 ```
 
-Twenty-four tests in a real browser, in three files:
+Forty-two tests in a real browser, in four files:
 
 - **`tests/rules.spec.ts`** — the brief's rules, one test each.
   Digits only, paste filtered, focus advancing, both Backspace behaviours, hold-to-clear,
@@ -41,6 +41,11 @@ Twenty-four tests in a real browser, in three files:
 - **`tests/regressions.spec.ts`** — one test per bug that actually shipped and was found by
   hand. These are the ones worth having: each names a mistake that was easy to make,
   survived review, and now takes a second to catch.
+- **`tests/a11y.spec.ts`** — reliability and accessibility. Tab and Shift+Tab pass
+  through the field in one stop and out again, the hidden cells leave the focus order and
+  the accessibility tree once authenticated, one-time-code autofill and mobile keyboard
+  deletion work, everything fits and works at 320px and 375px, and under reduced motion
+  nothing moves through a whole attempt.
 
 Playwright rather than jsdom, because jsdom has no modal `<dialog>`, no `element.animate`
 and no real focus — and all three of those are where the bugs were. Testing a polyfilled
@@ -92,7 +97,7 @@ for a path this build never takes.
 | --- | --- | --- |
 | **The component** | `src/passkey/` | 14 files. The field itself. Nothing in it knows about the page, and nothing outside it is needed to use it. |
 | **The page** | `src/main.tsx`, `src/styles.css` | 2 files. What renders the field. Neither ships with the component. |
-| **The tests** | `tests/`, `playwright.config.ts` | 5 files. 24 tests in a real browser. |
+| **The tests** | `tests/`, `playwright.config.ts` | 5 files. 42 tests in a real browser. |
 | **The scaffolding** | `package.json`, `tsconfig*.json`, `vite.config.ts`, `index.html`, `.gitignore` | What Vite and TypeScript need. `npm run build` typechecks all three projects — the app, the Vite config, and the tests — so a type error in a spec fails the build rather than waiting for someone to run it. |
 
 ```
@@ -115,7 +120,7 @@ src/passkey/                 the component — nothing in here knows about the p
     resend.css              the resend line
     strip.css               cells, caret, digit
     states.css              focused, verifying, refused, and reduced motion
-    fluid.css               the neck the box parts from the strip with
+    fluid.css               the bridge the box parts from the strip with
     dialog.css              the confirmation
 
 src/main.tsx                 the page that renders it

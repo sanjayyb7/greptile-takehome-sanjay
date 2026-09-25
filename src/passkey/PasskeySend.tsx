@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { PASTE_FADE_MS, PASTE_SEND_MS } from "./timing";
+import { PASTE_FADE_MS } from "./timing";
 import type { usePasskey } from "./usePasskey";
 
 type Passkey = ReturnType<typeof usePasskey>;
@@ -45,11 +45,7 @@ const BLOCK_REACH_MS = 80;
 export function PasskeySend({ passkey }: { passkey: Passkey }) {
   const { digits, status, submit, entry, stale } = passkey;
   const box = useRef<HTMLButtonElement>(null);
-  /** the blob that travels with the box inside the goo layer — see the fluid notes below */
-  const blob = useRef<HTMLSpanElement>(null);
-  /** and the stub it is leaving, which is drawn back in once the neck has snapped */
-  const root = useRef<HTMLSpanElement>(null);
-  /** the caret block's continuation, drawn crisp over the neck — see .pk-goo-plug */
+  /** the bridge between the strip and the box as they part — see .pk-goo-plug */
   const plug = useRef<HTMLSpanElement>(null);
   const checking = status === "verifying" || status === "success";
   // Pressed is as good as emptied, for a box that does not wait out the check: the exit is
@@ -97,20 +93,6 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
 
     const style = getComputedStyle(el);
     const easeOut = style.getPropertyValue("--ease-out").trim() || "ease-out";
-    /*
-     * In the fluid version what you see is not this button at all. A filter merges any
-     * two shapes that come within about its blur radius of each other and hardens the
-     * result's edges again, so a shape leaving another drags a neck behind it that thins
-     * and snaps — which only works if both shapes are inside the same filtered group.
-     * The button cannot be: it has to stay where the pointer and the focus ring expect
-     * it. So the green is a blob in that group, moving on exactly the keyframes the
-     * button does, and the button keeps only the arrow and the hit area.
-     */
-    const play = (frames: Keyframe[], options: KeyframeAnimationOptions) => {
-      el.animate(frames, options);
-      blob.current?.animate(frames, options);
-    };
-
     const running = el.getAnimations();
     // Read where the box actually is BEFORE cancelling. getComputedStyle hands back a
     // live object, and cancelling drops the element to its CSS base — which here is the
@@ -121,7 +103,6 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
     running.forEach((a) => a.cancel());
     // the bridge's animations fill both ways too, and a new one would stack on the last
     plug.current?.getAnimations().forEach((a) => a.cancel());
-    root.current?.getAnimations().forEach((a) => a.cancel());
     const gap = parseFloat(style.getPropertyValue("--pk-send-gap")) || 16;
 
     /*
@@ -139,53 +120,43 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
       // from CSS so a version can shorten it without a prop: 380 is above the 300ms
       // ceiling for UI, and against a 234ms exit it made the arrival the slow half of
       // a pair where both are the system answering
-      const opened = parseFloat(style.getPropertyValue("--pk-smooth-ms")) || SMOOTH_MS;
-      const ms = leaving ? SEND_OUT_MS : opened;
+      const ms = parseFloat(style.getPropertyValue("--pk-smooth-ms")) || SMOOTH_MS;
       // The box does not move until the block that pushes it has reached the strip's edge:
-        // opening any sooner, it was out and waiting before anything had touched it.
-        const lead = (entry === "paste" ? PASTE_FADE_MS : 0) + BLOCK_REACH_MS;
-        el.style.setProperty("--pk-arrow-delay", `${lead + ms}ms`);
-      // no blurred neck here: its bulge made the box's end of the bridge bigger than the
-      // block's, and the bridge below is the whole of the join, crisp at both ends
+      // opening any sooner, it was out and waiting before anything had touched it.
+      const lead = (entry === "paste" ? PASTE_FADE_MS : 0) + BLOCK_REACH_MS;
+      el.style.setProperty("--pk-arrow-delay", `${lead + ms}ms`);
       // The bridge: a funnel from the block into the box — full height at the strip's
       // face, pinched in the middle, full height again at the box's. Its width IS the
-      // progress, so its far end stays on the box's edge as the gap opens; it holds its
-      // shape until the neck has thinned behind it, then pinches off. Sizes rather than
-      // scale, so the curves keep their shape instead of being squeezed with the bar.
-      if (!leaving) {
-        const [W, R] = [PLUG_WAIST, PLUG_R];
-        plug.current?.animate(
-          [// The block's height at both faces, and held there for as long as the block is
-           // still pushing: the box starts as the block reaches the strip's edge, and the block
-           // has gone into it ~130ms later, which is 0.72 of the eased progress. Shrinking the block's end any
-           // earlier left the block bigger than what it was pushing into.
-           { width: "0px", height: `${W}px`, "--pk-plug-rl": `${R}px`, "--pk-plug-rr": `${R}px` },
-           { width: `${gap * 0.72}px`, height: `${W}px`, "--pk-plug-rl": `${R}px`, "--pk-plug-rr": `${R}px`, offset: 0.72 },
-           // then it lets go of the block — a quick break at the block's end —
-           { width: `${gap * 0.8}px`, height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": `${R}px`, offset: 0.8 },
-           // and the box takes in what it was carrying
-           { width: `${gap}px`, height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": "0px" }],
-          { duration: ms, delay: lead,
-            easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
-        );
-      }
-      play(
-        leaving
-          ? [{ translate: heldTranslate, scale: heldScale, opacity: 1 },
-             { translate: shut, scale: "0 1", opacity: 1 }]
-          : [{ translate: shut, scale: "0 1", opacity: 1 },
-             { translate: "0 0", scale: "1 1", opacity: 1 }],
-        { duration: ms, delay: lead,
-          easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
+      // progress, so its far end stays on the box's edge as the gap opens. Sizes rather
+      // than scale, so the curves keep their shape instead of being squeezed with the bar.
+      const [W, R] = [PLUG_WAIST, PLUG_R];
+      plug.current?.animate(
+        [// The block's height at both faces, and held there for as long as the block is
+         // still pushing: the box starts as the block reaches the strip's edge, and the
+         // block has gone into it ~130ms later, which is 0.72 of the eased progress.
+         // Shrinking the block's end any earlier left the block bigger than what it was
+         // pushing into.
+         { width: "0px", height: `${W}px`, "--pk-plug-rl": `${R}px`, "--pk-plug-rr": `${R}px` },
+         { width: `${gap * 0.72}px`, height: `${W}px`, "--pk-plug-rl": `${R}px`, "--pk-plug-rr": `${R}px`, offset: 0.72 },
+         // then it lets go of the block — a quick break at the block's end —
+         { width: `${gap * 0.8}px`, height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": `${R}px`, offset: 0.8 },
+         // and the box takes in what it was carrying
+         { width: `${gap}px`, height: "0px", "--pk-plug-rl": "0px", "--pk-plug-rr": "0px" }],
+        { duration: ms, delay: lead, easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
       );
-    return;
+      el.animate(
+        [{ translate: shut, scale: "0 1", opacity: 1 },
+         { translate: "0 0", scale: "1 1", opacity: 1 }],
+        { duration: ms, delay: lead, easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" },
+      );
+      return;
     }
 
     // And back, in the order it makes sense in: the arrow leaves first — that is a CSS
     // animation of its own — and only once it is gone does the box get pulled in. The
     // gap closes on an ease-in, accelerating towards the strip, because being pulled is
     // not the same shape as arriving somewhere.
-    if (leaving) {
+    {
       const shutTo = "calc(-1 * var(--pk-send-gap)) 0";
       // The same funnel, backwards: it forms as the box starts back, and its width is
       // the gap closing — the same keyframes and curve as the box's own return, as a
@@ -203,7 +174,7 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
          { height: `${PLUG_WAIST}px`, "--pk-plug-rl": `${PLUG_R}px`, "--pk-plug-rr": `${PLUG_R}px`, offset: 0.26 },
          { height: `${PLUG_WAIST}px`, "--pk-plug-rl": `${PLUG_R}px`, "--pk-plug-rr": `${PLUG_R}px` }], back);
 
-      play(
+      el.animate(
         [{ translate: heldTranslate, scale: heldScale, opacity: 1,
            easing: "cubic-bezier(0.55, 0, 0.85, 0.35)" },
          { translate: shutTo, scale: "1 1", opacity: 1, offset: 0.45, easing: easeOut },
@@ -213,18 +184,6 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
       return;
     }
 
-    const from = running.length ? heldScale : leaving ? "1 1" : "0 1";
-    play(
-      leaving
-        ? [{ scale: from, opacity: 1 }, { scale: "0 1", opacity: 0 }]
-        : [{ scale: from }, { scale: "1 1" }],
-      {
-        duration: leaving ? SEND_OUT_MS : entry === "paste" ? PASTE_SEND_MS : SEND_IN_MS,
-        delay: !leaving && entry === "paste" ? PASTE_FADE_MS : 0,
-        easing: easeOut,
-        fill: "both",
-      },
-    );
     // `ready` is a dependency because the component returns null until the code is
     // complete: the element appears without either of the others changing, and without
     // it here the box would sit at the closed scale it is declared with, never opening.
@@ -237,17 +196,8 @@ export function PasskeySend({ passkey }: { passkey: Passkey }) {
 
   return (
     <>
-      {(
-        // the root stays behind at the strip's edge; the blob is the box's green, and the
-        // neck between them is the filter's doing, not a shape anyone drew
-        <>
-          <span className="pk-goo" aria-hidden="true">
-            <span className="pk-goo-root" ref={root} />
-            <span className="pk-goo-blob" ref={blob} />
-          </span>
-          <span className="pk-goo-plug" ref={plug} aria-hidden="true" />
-        </>
-      )}
+      {/* the bridge between the strip and the box, as they part — see .pk-goo-plug */}
+      <span className="pk-goo-plug" ref={plug} aria-hidden="true" />
       <button type="button" ref={box} className="pk-send" onClick={() => submit()} aria-label="Send passcode"
       disabled={busy || leaving} data-busy={busy || undefined} data-leaving={leaving || undefined}>
       {/* 32px, so it carries the 84x128 box the way a 36px digit carries a cell; the 2.2

@@ -1,5 +1,5 @@
 /* The field's public surface. Everything an app outside this folder should need is here,
-   and everything it should not need — the cells, the send box, the wipe, the goo — is not.
+   and everything it should not need — the cells, the send box, the wipe — is not.
    Importing a file directly still works; this is the line that says which of them are the
    ones meant to be imported.
 

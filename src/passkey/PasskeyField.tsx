@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { PasskeyCells } from "./PasskeyCells";
 import { PasskeyResend } from "./PasskeyResend";
 import { StatusIcon } from "./StatusIcon";
@@ -56,11 +56,6 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
   resendTo?: string;
   onSuccess?: (code: string) => void;
 }) {
-  /* The goo filter is referenced from CSS, which cannot know a generated id — so the id is
-     generated here and handed to CSS as a variable. Written out, two fields on a page
-     would define #pk-goo twice and every filter in both of them would resolve to the
-     first, which is the first field's coordinate space. */
-  const gooId = useId();
   const passkey = usePasskey({
     length, autoSubmit, stepsWhenHeld: true, handsBackOnError: true,
     onVerify, onResend, resendCooldown, onSuccess,
@@ -146,30 +141,11 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
        The strip's width is the cells', so it has to be derived rather than declared: it
        was a flat 336px, which is four cells, and a six-digit field laid its strip outside
        the box that is supposed to contain it. */
-    <div className="passkey" ref={rootRef} style={{ "--pk-length": length, "--pk-goo": `url(#${gooId})` } as CSSProperties}
+    <div className="passkey" ref={rootRef} style={{ "--pk-length": length } as CSSProperties}
       data-state={status}
       data-fail={fail ?? undefined}
       data-phase={phase === "none" ? undefined : phase}
       data-shake={shake} data-busy={passkey.busy || undefined}>
-      {/*
-        * The goo filter. Blur everything in the group, then throw
-        * the alpha channel's contrast far enough that the blur's soft edge snaps back to
-        * a hard one: shapes further apart than the blur stay separate, shapes closer than
-        * it merge, and shapes in between are joined by a neck. Nothing draws the neck —
-        * it is what is left when two blurred edges overlap enough to survive the
-        * threshold, which is why it thins and breaks on its own as they part.
-        */}
-      <svg className="pk-defs" aria-hidden="true" focusable="false">
-        {/* wider than the default region, which would clip the blur at the edges */}
-        <filter id={gooId} x="-25%" y="-25%" width="150%" height="150%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="soft" />
-          <feColorMatrix in="soft" type="matrix"
-            values="1 0 0 0 0
-                    0 1 0 0 0
-                    0 0 1 0 0
-                    0 0 0 26 -13" />
-        </filter>
-      </svg>
       {/* the row keeps its height in every state so the strip never jumps */}
       <p className="pk-status" role="status" aria-live="polite">
         {above && (

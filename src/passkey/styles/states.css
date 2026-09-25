@@ -107,7 +107,19 @@
      rule below on specificity */
   .passkey[data-phase] .pk-spoke { animation: none; opacity: 0; }
   .passkey[data-phase] .pk-strip { animation: none; opacity: 0; }
-  .pk-status-text, .pk-send, .pk-send svg { animation: none; }
+  .pk-send, .pk-send svg { animation: none; }
+  /* The label still swaps on the tick's window, but by fading alone: the 8px rise in and
+     out is travel. Named with the full selectors — the base rules are (0,2,0) and (0,3,0),
+     and a bare .pk-status-text here lost to both, so the label went on sliding. */
+  .passkey .pk-status-text { animation-name: pk-fade-in; }
+  .passkey .pk-status-text[data-leaving] { animation-name: pk-fade-out; }
+  /* the arrow leaves the same way: fading, not sliding back */
+  .pk-send[data-leaving] svg { animation-name: pk-fade-out; }
+  /* a refusal's spinner does not gather — it simply gives way to the "!" */
+  .passkey[data-fail] .pk-spoke { animation: none; }
+  /* and the success mark is there at its size, drawn, rather than growing and tracing */
+  .passkey[data-phase] .pk-check-wall,
+  .passkey[data-phase] .pk-check-tick { transition: none; }
   .passkey[data-fail="mark"] .pk-bang-glyph,
   .passkey[data-fail="mark"] .pk-bang-stem,
   .passkey[data-fail="mark"] .pk-bang-dot { transition: none; }
@@ -121,3 +133,7 @@
   .pk-check { filter: none; }
   .pk-check-tick { clip-path: inset(6.5px 4.5px 5.5px 4.5px); }
 }
+
+/* the reduced-motion swaps: the same beats, opacity only */
+@keyframes pk-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pk-fade-out { from { opacity: 1; } to { opacity: 0; } }

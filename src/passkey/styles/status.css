@@ -56,10 +56,6 @@
   45%, 100% { transform: rotate(calc(var(--a) * 1deg)) translate(0, -10px); opacity: .18; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .pk-spin-origin { animation: none; }
-  .pk-check-origin { animation: none; }
-}
 
 /* One coordinated timeline, measured from the moment verification succeeds:
      0ms    GATHER   cells and arrow fade over 160ms; the eight spokes stop waving and

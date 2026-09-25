@@ -44,9 +44,6 @@
   from { opacity: 1; translate: 0 0; }
   to   { opacity: 0; translate: -16px 0; }
 }
-@media (prefers-reduced-motion: reduce) {
-  /* JS skips the drop, so the box has to be told it has already landed */
-  }
 /* It travels in, the way the block came: from the box's left side, 24px — the arrow's own
    margin inside the box, so it never crosses the edge — and sharpens as it lands. At 8px
    it only faded, and read as a thing being unhidden rather than arriving. */

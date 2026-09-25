@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { PasskeySend, SEND_IN_MS, SEND_OUT_MS } from "./PasskeySend";
-import { MARK_MS, PASTE_FADE_MS, PASTE_SEND_MS, SHAKE_MS } from "./timing";
+import { MARK_MS, PASTE_FADE_MS, PASTE_SEND_MS } from "./timing";
 import type { usePasskey } from "./usePasskey";
 
 type Passkey = ReturnType<typeof usePasskey>;
@@ -14,41 +14,25 @@ type Passkey = ReturnType<typeof usePasskey>;
  * when it turns round, because that is when it is being stopped. So the stretch sits
  * between the keyframes that carry the furthest displacement, not on them.
  *
- * One table, four tracks, so the strip and everything hanging off it stay in step:
- *   x, sx, sy   the strip itself
- *   lag         how far the send box falls behind the swing
- *   neck        how thick the liquid between them is at that moment
+ * x is the swing; sx and sy are the stretch along it and the squash across it.
  */
 const SHAKE_FRAMES = [
-  //  at     x    sx     sy      lag  neck
-  { at: 0,    x:  0, sx: 1.000, sy: 1.000, lag:  0,   neck: 0 },
-  { at: 0.09, x: -5, sx: 1.026, sy: 0.974, lag:  1.8, neck: 0.22 },
-  { at: 0.19, x: -7, sx: 0.984, sy: 1.016, lag:  2.5, neck: 0.14 },
-  { at: 0.33, x:  3, sx: 1.022, sy: 0.978, lag: -1.0, neck: 0.26 },
-  { at: 0.45, x:  6, sx: 0.988, sy: 1.012, lag: -2.1, neck: 0.16 },
-  { at: 0.58, x: -2, sx: 1.013, sy: 0.987, lag:  0.7, neck: 0.24 },
-  { at: 0.68, x: -4, sx: 0.994, sy: 1.006, lag:  1.4, neck: 0.18 },
-  { at: 0.80, x:  1, sx: 1.006, sy: 0.994, lag: -0.3, neck: 0.20 },
-  { at: 0.88, x:  2, sx: 0.998, sy: 1.002, lag: -0.7, neck: 0.10 },
-  { at: 1,    x:  0, sx: 1.000, sy: 1.000, lag:  0,   neck: 0 },
+  //  at     x    sx     sy
+  { at: 0,    x:  0, sx: 1.000, sy: 1.000 },
+  { at: 0.09, x: -5, sx: 1.026, sy: 0.974 },
+  { at: 0.19, x: -7, sx: 0.984, sy: 1.016 },
+  { at: 0.33, x:  3, sx: 1.022, sy: 0.978 },
+  { at: 0.45, x:  6, sx: 0.988, sy: 1.012 },
+  { at: 0.58, x: -2, sx: 1.013, sy: 0.987 },
+  { at: 0.68, x: -4, sx: 0.994, sy: 1.006 },
+  { at: 0.80, x:  1, sx: 1.006, sy: 0.994 },
+  { at: 0.88, x:  2, sx: 0.998, sy: 1.002 },
+  { at: 1,    x:  0, sx: 1.000, sy: 1.000 },
 ];
 
 const SHAKE = SHAKE_FRAMES.map((f) => ({
   transform: `translateX(${f.x}px) scale(${f.sx}, ${f.sy})`, offset: f.at,
 }));
-
-/* The box is the heavy end. It rides the strip, so this is only what it fails to follow:
-   a counter-move against the swing, which leaves it trailing the whipping cells. */
-const SHAKE_DRAG = SHAKE_FRAMES.map((f) => ({
-  transform: `translateX(${f.lag}px)`, offset: f.at,
-}));
-
-/* And the liquid comes back to span what the drag opens up. The neck is already the full
-   width of the gap and lying flat — that is how it was left when it broke — so this only
-   thickens it: fullest as the strip gathers back through centre, drawn thin at the
-   extremes where the box is furthest behind, and flat again at the end, which is exactly
-   where the send box's own animation left it. */
-const SHAKE_NECK = SHAKE_FRAMES.map((f) => ({ scale: `1 ${f.neck}`, offset: f.at }));
 
 /** keep in step with the pk-digit-out duration in passkey.css. Not --pk-digit-ms: the
  *  exit has its own, shorter time, and holding the glyph for the entrance's instead left
@@ -347,12 +331,12 @@ export function PasskeyCells({ passkey, length, send, shakeOn }: {
    * shakes when that mark lands rather than when the error arrives, so the two read as
    * one event; 0 means "not now".
    */
-  shakeOn?: number;
+  shakeOn: number;
 }) {
-  const { digits, stamps, status, shake: rejected, busy, focused, cells, write, onKeyDown, onPaste, onFocus, onBlur, erasePace, entry, stale, picked, pick } = passkey;
+  const { digits, stamps, status, busy, focused, cells, onInput, onBeforeInput, onKeyDown, onPaste, onFocus, onBlur, erasePace, entry, stale, picked, pick } = passkey;
   const strip = useRef<HTMLDivElement>(null);
 
-  const shake = shakeOn ?? rejected;
+  const shake = shakeOn;
   // WAAPI, not CSS: a counter in an attribute doesn't restart a CSS animation — going from
   // data-shake="1" to "2" leaves the selector already matching, so only the first rejection
   // ever played. This restarts on every one, and retargets if they land back to back.
@@ -360,21 +344,13 @@ export function PasskeyCells({ passkey, length, send, shakeOn }: {
     if (!shake || !strip.current) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     // keyed to the "!" rather than the error, it runs for as long as the mark takes to write
-    const opts = { duration: shakeOn === undefined ? SHAKE_MS : MARK_MS,
-      easing: "cubic-bezier(0.77, 0, 0.175, 1)" } as const;
+    const opts = { duration: MARK_MS, easing: "cubic-bezier(0.77, 0, 0.175, 1)" } as const;
     strip.current.animate(SHAKE, opts);
     // no fill on any of these: each ends on the value the send box's own animations are
     // already holding, so letting them expire hands control straight back
-    strip.current.querySelector(".pk-send")?.animate(SHAKE_DRAG, opts);
-    strip.current.querySelector(".pk-goo-blob")?.animate(SHAKE_DRAG, opts);
-    strip.current.querySelector(".pk-goo-root")?.animate(SHAKE_NECK, opts);
   }, [shake]);
 
-  // matches PasskeySend's own condition: while the box is on screen the last cell gives up
-  // its rounded corner, so the two stay flush — including through verifying, where the box
-  // waits dimmed rather than leaving
-  // the same condition the box itself is under, so the last cell takes its corner back
-  // on the frame the box starts leaving rather than after it has gone
+  // a refused code is not on offer: the send box stays away until it is edited
   const refused = status === "error";
   /* A code has just been sent, so the complete one on screen is the previous one. Same
      reasoning as a refusal: the button's whole meaning would be "send that", and that is
@@ -392,8 +368,33 @@ export function PasskeyCells({ passkey, length, send, shakeOn }: {
   const { wipe, ref: wipeRef } = useWipe(busy ? null : caretAt, erasePace, length,
     entry === "paste", refused);
 
+  /* One stop in the Tab order, not four: the cell typing would go to — the focused one,
+     else the first gap, else the last. With every cell tabbable, Tab from the first empty
+     cell landed on the second, which onFocus steers back to the first gap, so focus could
+     never leave the field. The arrow keys still move between cells. */
+  const gap = digits.findIndex((d) => !d);
+  const tabStop = focused ?? (gap === -1 ? length - 1 : gap);
+
+  /* Deletion reported by the browser rather than as a key — see onBeforeInput. React has
+     no handler for beforeinput's delete types, so it is listened for on the elements. */
+  const deleting = useRef(onBeforeInput);
+  deleting.current = onBeforeInput;
+  useEffect(() => {
+    const els = cells.current.slice(0, length);
+    const off = els.map((el, i) => {
+      if (!el) return () => {};
+      const on = (e: Event) => deleting.current(i, e as InputEvent);
+      el.addEventListener("beforeinput", on);
+      return () => el.removeEventListener("beforeinput", on);
+    });
+    return () => off.forEach((f) => f());
+  }, [cells, length]);
+
   return (
     <div className="pk-strip" ref={strip} onPaste={onPaste} data-send={showSend ? "on" : undefined}
+      /* authenticated, the cells have faded out: they leave the focus order and the
+         accessibility tree with it, rather than lingering as invisible inputs */
+      inert={status === "success"} aria-hidden={status === "success" || undefined}
       /* The box is up AND nobody has chosen a cell since — which is when the ring and the
          caret stand down. Separate from data-send, because the box being up is not on its
          own a reason to hide where typing would land. */
@@ -407,12 +408,14 @@ export function PasskeyCells({ passkey, length, send, shakeOn }: {
             className="pk-cell"
             value={digit}
             readOnly={busy}
+            tabIndex={i === tabStop ? 0 : -1}
             inputMode="numeric"
             pattern="[0-9]*"
+            /* no maxLength: one-time-code autofill writes the whole code into one cell,
+               and a limit of 1 cut it to its first digit — onInput spreads it instead */
             autoComplete="one-time-code"
-            maxLength={1}
             aria-label={`Digit ${i + 1} of ${length}`}
-            onChange={(e) => write(i, e.target.value)}
+            onChange={(e) => onInput(i, e)}
             onKeyDown={(e) => onKeyDown(i, e)}
             onFocus={(e) => onFocus(i, e)}
             onPointerDown={pick}

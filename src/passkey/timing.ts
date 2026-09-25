@@ -20,12 +20,8 @@ export const PASTE_FADE_MS = 200;
  *  arrival, so the two finish together rather than one outlasting the other */
 export const PASTE_SEND_MS = 220;
 
-/** how long the strip is shaken for on a rejection. Anything timed to the shake reads it
- *  from here rather than repeating the number — see flashesError. */
-export const SHAKE_MS = 380;
-
 /** how long the red "!" takes to write itself once it lands: the stem is traced from
- *  160ms to 360ms and the full stop pops in over the 220ms after. Where a refusal is
- *  marked with it, the shake lasts exactly this long, so the strip is still moving until
- *  the mark and its label have finished arriving. Keep in step with the pk-bang rules. */
+ *  160ms to 360ms and the full stop pops in over the 220ms after. The shake lasts exactly
+ *  this long, so the strip is still moving until the mark and its label have finished
+ *  arriving. Keep in step with the pk-bang rules. */
 export const MARK_MS = 580;

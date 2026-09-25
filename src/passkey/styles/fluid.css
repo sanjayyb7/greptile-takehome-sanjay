@@ -1,65 +1,9 @@
-/* The versions where the box parts from the strip like liquid */
+/* The box parting from the strip: the bridge that runs between them as it opens and closes
 
-/* ---------- Fluid: the box parts from the strip like liquid ---------- */
-
-.pk-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
-
-/* The filtered group. It sits over the strip's right end and reaches past it, because the
-   neck lives in the space between the two shapes and would be clipped away otherwise.
-   pointer-events: none — the button underneath still owns every press. */
-.pk-goo { position: absolute; left: calc(100% - var(--pk-goo-lead)); top: -24px; z-index: 1;
-  width: calc(var(--pk-cell-w) + var(--pk-send-gap) + var(--pk-goo-lead) + 48px);
-  height: calc(128px + 48px);
-  pointer-events: none; filter: var(--pk-goo);
-  /* a filter only applies within its own region, and anything drawn outside the filtered
-     element's box falls out of it and renders raw — which showed up as the neck suddenly
-     having hard edges. The layer starts --pk-goo-lead left of the strip so the neck's
-     root, which reaches back into the cell, is inside it. */
-  --pk-goo-lead: 40px; }
-/* The neck itself, drawn rather than hoped for.
-   Two blobs only merge if they are within about the blur of each other, and the box ends
-   up a whole gap away from the strip — far too far. So the thing between them is a real
-   element: pinned at the strip's edge, as wide as the gap the box is opening, and
-   thinning as it is drawn out. The filter's job is only to round its junctions, which is
-   what turns a stretching rectangle into a waist with a convex root and a concave flare
-   into the box's edge. It thins to nothing, and nothing is where it breaks. */
-.pk-goo-root { position: absolute; left: var(--pk-goo-lead); top: 50%;
-  /* a little wider than the gap it spans, so its far end is always inside the box rather
-     than reaching for it — a couple of pixels short and the two stop merging, which reads
-     as a notch in the box's edge and a stub left behind */
-  width: calc(var(--pk-send-gap) + 10px); height: 56px; margin-top: -28px;
-  /* 56 so that at the .78 it opens at, it is 44px — the caret block's own height. The
-     block is what pushes the box out, so the bulge it drives into the box's edge has to
-     be the block's size; at 92 it was half as tall again and read as something else
-     swelling out rather than the block coming through. */
-  /* Square at the strip's end, rounded at the box's. It used to start inside the cell so
-     that the blur's rounding still reached it, which is what put green over the cell —
-     but a blur only pulls a CORNER in, not a straight edge: the half-alpha contour of a
-     flat edge sits where the edge already was. Squared off, it meets the cell exactly and
-     crosses nothing. */
-  border-radius: 0 8px 8px 0; background: var(--pk-focus);
-  transform-origin: left center; scale: 0 .78; }
-
-/* The box's stand-in, at exactly the box's size and position and moving on its
-   keyframes. It has to be the box's full shape, not a small anchor beside it: a neck
-   only curves into something that is in the filter with it, and an anchor that is not
-   the box reads as a third shape sitting between the block and the box rather than as
-   liquid attached to it.
-
-   The filter rounds its corners — a blur and a threshold always will — but the real box
-   is drawn on top at the same size with its own 16px corners, so what is rounded is
-   underneath and what you see is a straight edge with the neck curving into it. */
-.pk-goo-blob { position: absolute; left: calc(var(--pk-goo-lead) + var(--pk-send-gap)); top: 24px;
-  width: var(--pk-cell-w); height: 128px; border-radius: 16px;
-  background: var(--pk-focus); transform-origin: left center;
-  scale: 0 1; translate: calc(-1 * var(--pk-send-gap)) 0; }
-
-/* The bridge between the strip and the box. The neck is blurred, and a blur rounds
-   anything short into a point — so what came out of the strip was a small nub, not the
-   block that pushed it. This is drawn outside the filter, crisp: a funnel that is the
-   block's full 44px at the strip's face, pinches to a waist, and opens to 44px again at
-   the box's. It forms as the box opens and pinches off; on the way back it forms again as
-   the box is pulled in. Invisible (0 × 0) everywhere it is not animated. */
+   A funnel drawn crisp, the caret block's full 44px at the strip's face, pinched to a
+   waist, and 44px again at the box's — so the box reads as pushed out by the block and
+   swelling out of it. It forms as the box opens and pinches off; on the way back it forms
+   again as the box is pulled in. Invisible (0 × 0) everywhere it is not animated. */
 /* registered so they can be animated: each end's flare, the block's end and the box's */
 @property --pk-plug-rl { syntax: "<length>"; inherits: true; initial-value: 0px; }
 @property --pk-plug-rr { syntax: "<length>"; inherits: true; initial-value: 0px; }
@@ -82,12 +26,11 @@
     radial-gradient(ellipse 100% 100% at 0 100%, transparent 99%, var(--pk-focus) 100%);
   background-position: left top, right top; }
 
-/* the box keeps its own green and its own corners, and sits over the goo rather than in
-   it — the liquid is only what runs between it and the strip */
+/* the box sits over the bridge, so the bridge's far end disappears under its edge */
 .pk-send { z-index: 2; }
 
 @media (prefers-reduced-motion: reduce) {
-  /* no parting to watch, so no neck to draw */
-  .pk-goo, .pk-goo-plug { display: none; }
+  /* no parting to watch, so no bridge to draw */
+  .pk-goo-plug { display: none; }
 }
 
