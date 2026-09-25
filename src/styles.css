@@ -1,6 +1,7 @@
 /* the page is only a stage for the field — the design owns everything inside it */
-/* light unless the page is told otherwise — see the switch in main.tsx. color-scheme is
-   what dresses form controls, scrollbars and the native caret to match. */
+/* Light unless something sets data-theme="dark" on <html>. There is no switch here — the
+   field supports dark for an app that wants it, and this page shows the design as drawn.
+   color-scheme is what dresses form controls, scrollbars and the native caret to match. */
 html { color-scheme: light; }
 html[data-theme="dark"] { color-scheme: dark; }
 body { margin: 0; background: var(--page); --page: #fff;
@@ -17,19 +18,3 @@ body { margin: 0; background: var(--page); --page: #fff;
 /* The stage goes dark with the field. Not pure black: the cells sit a step above the page
    and the page needs somewhere to sit below them. */
 :root[data-theme="dark"] body { --page: #0e0e0f; }
-
-/* The light/dark switch. Out of the field's way in the corner, and out of the flow so the
-   field stays centred on the page rather than on what is left of it. */
-.theme-toggle { position: fixed; top: 20px; right: 20px; z-index: 10;
-  width: 36px; height: 36px; display: grid; place-items: center;
-  padding: 0; border: 1px solid var(--pk-line, #e4e4e4); border-radius: 10px;
-  background: none; color: #858585; cursor: pointer;
-  transition: color 160ms ease, border-color 160ms ease; }
-.theme-toggle:focus-visible { outline: 2px solid #107a4d; outline-offset: 2px; }
-@media (hover: hover) and (pointer: fine) {
-  .theme-toggle:hover { color: #323232; border-color: #c9c9c9; }
-}
-:root[data-theme="dark"] .theme-toggle { border-color: #2c2e31; color: #8b8d90; }
-@media (hover: hover) and (pointer: fine) {
-  :root[data-theme="dark"] .theme-toggle:hover { color: #ededed; border-color: #44474b; }
-}
