@@ -7,7 +7,7 @@ test.describe("the cases", () => {
     const f = await Field.open(page);
     await f.type("12");
     await f.press("Enter");
-    await expect(f.problem).toHaveText("Enter all 4 digits.");
+    await expect(f.problem).toHaveText("Missing digits");
     expect(await f.focusedCell()).toBe(2);
     // not an error: nothing was refused, because nothing was asked
     expect(await f.state()).toBe("idle");
@@ -18,7 +18,7 @@ test.describe("the cases", () => {
     const f = await Field.open(page);
     await f.type(Field.WRONG);
     await f.press("Enter");
-    await expect(f.problem).toHaveText("Incorrect code. Try again.", VERDICT);
+    await expect(f.problem).toHaveText("Incorrect code", VERDICT);
     expect(await f.code()).toBe(Field.WRONG);
     await f.press("Backspace");
     await expect(f.problem).toHaveCount(0);
@@ -28,7 +28,7 @@ test.describe("the cases", () => {
     const f = await Field.open(page);
     await f.type(Field.OFFLINE);
     await f.press("Enter");
-    await expect(f.problem).toHaveText("Couldn't verify your code. Try again.", VERDICT);
+    await expect(f.problem).toHaveText("Not verified", VERDICT);
     expect(await f.code()).toBe(Field.OFFLINE);   // kept, because they may well be right
     expect(await f.state()).toBe("idle");         // no verdict was reached, so no error
     await f.press("Enter");                       // and it can simply be tried again

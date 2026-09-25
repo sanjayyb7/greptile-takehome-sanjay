@@ -206,7 +206,7 @@ const steadyHeight = (v: Version) => v === 8 || v >= 14;
  * The colour and the movement are one event, so they start and stop on the same frames.
  * What carries the rejection from then on is the line underneath, which is what it is for.
  */
-const flashesError = (v: Version) => v === 8 || (v >= 15 && v !== 18);
+const flashesError = (v: Version) => v >= 15 && v !== 18;
 
 
 /**
@@ -281,7 +281,7 @@ const pours = (v: Version) => v === 18;
  * into the answer. Everything red lands on that frame — the mark, the label, the focused
  * cell — and the shake with it, so it reads as one event.
  */
-const verdictInRow = (v: Version) => v === 14 || v === 18;
+const verdictInRow = (v: Version) => v === 8 || v === 14 || v === 18;
 
 /**
  * Everything that differs between the explorations, gathered into one value.

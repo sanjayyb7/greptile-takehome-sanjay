@@ -25,7 +25,7 @@ test.describe("verdict in the row", () => {
     await expect.poll(() => f.state(), VERDICT).toBe("error");
     await expect(f.root).toHaveAttribute("data-fail", "mark");
     await expect(label(f)).toHaveText("Incorrect code");
-    await expect(f.problem).toHaveCount(0);            // no sentence under the strip
+    await expect(page.locator(".pk-problem")).toHaveCount(0);   // no sentence under the strip
     await expect(f.sendBox).toHaveCount(0);            // and the box does not come back
     expect(await f.focusedCell()).toBe(3);
   });
