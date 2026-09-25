@@ -1,0 +1,110 @@
+/* The liquid pour, and the refusal that closes into a "!" */
+
+/* ---------- The pour layer ---------- */
+
+/* Over the whole field and past it: the box sits a gap beyond the strip's right edge, so
+   the layer reaches out that far, and above the status row for the splash. A goo filter
+   only draws inside its own element's region, which is why the layer is this big rather
+   than the field's size. Hidden until a pour runs, so the filter is not composited over
+   an empty layer the rest of the time. */
+.pk-pour { position: absolute; z-index: 4; pointer-events: none;
+  left: -48px; top: -64px; bottom: -48px;
+  right: calc(-1 * (var(--pk-cell-w) + var(--pk-send-gap) + 48px));
+  filter: var(--pk-goo); }
+.passkey:not([data-pour]) .pk-pour { visibility: hidden; }
+
+.pk-pour > * { position: absolute; background: var(--pk-focus); opacity: 0; }
+/* scaled about its own centre, so it balls up where the box stood */
+.pk-pour-source { border-radius: 16px; }
+/* a bar from the box's centre to the slot's, grown from its root; the angle is inline */
+.pk-pour-neck { border-radius: 999px; transform-origin: 0 50%; }
+/* box-sized and scaled round, so its centre is the box's centre and translate moves it
+   straight to the slot's. Always round: a stretched head reads as an ellipse, not a drop */
+.pk-pour-drop, .pk-pour-bead { border-radius: 50%; }
+
+/* The real box and the strip's goo give way to the source on the frame it appears.
+   visibility, not opacity: the box is held by a filling animation, and a filling
+   animation outranks an opacity declaration in the stylesheet. */
+.passkey[data-pour] .pk-send,
+.passkey[data-pour] .pk-goo { visibility: hidden; }
+
+/* ---------- The spinner is poured, not switched on ---------- */
+
+/* nothing in the slot while the drop is on its way up — it is what fills it */
+.passkey[data-pours][data-pour="flight"][data-state="verifying"] .pk-spinner { opacity: 0; }
+
+/* The spokes burst out of the splash already spinning. The burst uses the individual
+   rotate and scale properties, which the wave never touches, so the two run together and
+   compose instead of fighting over transform. Five attributes, so it outranks the
+   verifying wave (three) without depending on where it sits in the file. Kept for the
+   whole wait: handing the spokes to another rule would restart the wave, and a restart
+   reads as the loader pausing. */
+.passkey[data-pours][data-pour="land"][data-state="verifying"] .pk-spoke {
+  animation: pk-pour-spokes 380ms var(--ease-out) both,
+             pk-wave .9s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 6ms), calc((var(--i) - 7) * 112.5ms); }
+@keyframes pk-pour-spokes {
+  from { rotate: -60deg; scale: .1; }   /* a speck at the centre */
+  50%  { rotate: -10deg; scale: 1.35; } /* flung past the ring — the splash's droplets */
+  to   { rotate: 0deg;   scale: 1; }    /* pulled back onto it, still turning */
+}
+
+/* ---------- The refusal: the same close, into a red "!" ---------- */
+
+/* The general error styling paints the whole strip red and every digit with it. Here the
+   red belongs to the mark and to the cell the caret is in; the other cells stay neutral
+   and the digits stay dark and where they are. */
+.passkey[data-verdicts][data-state="error"] .pk-cell { border-color: var(--pk-line); caret-color: transparent; }
+.passkey[data-verdicts][data-state="error"] .pk-digit { color: var(--pk-ink); }
+
+/* The spinner stays through the close. Without this it vanished at the error and the
+   gather ran invisibly. The spokes run a success's own 280ms gather and stay green. */
+.passkey[data-verdicts][data-fail] .pk-spinner { opacity: 1; }
+.passkey[data-verdicts][data-fail] .pk-spoke {
+  animation: pk-v2-gather 280ms var(--ease-glide) forwards; }
+/* the success mark has no business here, not even its tick's round cap */
+.passkey[data-verdicts][data-fail] .pk-check { opacity: 0; }
+
+/* At the mark the spinner blurs out, and the "!" opens from the dot at the dot's size:
+   .12 of 24px is the ~3px the eight spokes closed into. */
+.passkey[data-verdicts][data-fail="mark"] .pk-spinner { opacity: 0; filter: blur(4px);
+  transition: opacity 160ms var(--ease-out), filter 160ms var(--ease-out); }
+
+.pk-bang-glyph { transform-box: view-box; transform-origin: 12px 12px; scale: .12; }
+.pk-bang-stem { stroke-dashoffset: 1; }
+.pk-bang-dot { transform-box: fill-box; transform-origin: 50% 50%; scale: 0; }
+.pk-bang { opacity: 0; }
+
+.passkey[data-verdicts][data-fail="mark"] .pk-bang { opacity: 1; }
+.passkey[data-verdicts][data-fail="mark"] .pk-bang-glyph { scale: 1;
+  transition: scale 160ms var(--ease-out); }
+/* the stem is traced like the tick, a pen at a steady speed, after the glyph has opened */
+.passkey[data-verdicts][data-fail="mark"] .pk-bang-stem { stroke-dashoffset: 0;
+  transition: stroke-dashoffset 200ms linear 160ms; }
+/* and the full stop last, with a little overshoot, the way a hand writes one */
+.passkey[data-verdicts][data-fail="mark"] .pk-bang-dot { scale: 1;
+  transition: scale 220ms cubic-bezier(.34, 1.56, .64, 1) 360ms; }
+/* a code with a gap never had a loader, so its "!" mounts already at the mark — these
+   give it the same entrance from the dot it would have had */
+@starting-style {
+  .passkey[data-verdicts][data-fail="mark"] .pk-bang-glyph { scale: .12; }
+  .passkey[data-verdicts][data-fail="mark"] .pk-bang-stem { stroke-dashoffset: 1; }
+  .passkey[data-verdicts][data-fail="mark"] .pk-bang-dot { scale: 0; }
+}
+
+/* Everything red lands on that same frame: the label that has just arrived, the focused
+   cell's ring and a soft glow, and the caret. No transitions on the ring — a 150ms fade
+   into red would land after the mark rather than with it. */
+.passkey[data-verdicts][data-fail="mark"] .pk-status-text:not([data-leaving]) { color: var(--pk-bad); }
+.passkey[data-verdicts][data-fail="mark"]:not([data-busy]) .pk-strip:not([data-parked]) .pk-cell:focus {
+  border-color: var(--pk-bad); transition: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--pk-bad) 12%, transparent); }
+.passkey[data-verdicts][data-fail="mark"] .pk-caret { background: var(--pk-bad); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* no pour at all — the loader simply appears — and the mark lands without opening */
+  .pk-pour { display: none; }
+  .passkey[data-verdicts][data-fail="mark"] .pk-bang-glyph,
+  .passkey[data-verdicts][data-fail="mark"] .pk-bang-stem,
+  .passkey[data-verdicts][data-fail="mark"] .pk-bang-dot { transition: none; }
+}

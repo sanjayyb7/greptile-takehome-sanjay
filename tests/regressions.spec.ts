@@ -178,7 +178,7 @@ test.describe("regressions", () => {
     // the versions are not all the same height, and the harness centred each at its own —
     // so changing version moved the one thing the switcher exists to compare
     const tops: number[] = [];
-    for (const v of [11, 13, 12, 1, 2, 4, 5, 8, 14, 17, 15]) {
+    for (const v of [11, 13, 12, 1, 2, 4, 5, 8, 14, 17, 15, 18]) {
       await page.goto(`/?v=${v}`);
       await page.waitForSelector(".pk-strip");
       tops.push(await page.evaluate(() =>

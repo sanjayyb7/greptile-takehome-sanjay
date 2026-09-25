@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { PasskeyCells } from "./PasskeyCells";
 import { FINAL, behaviourOf, type Behaviour, type Version } from "./variants";
+import { PasskeyPour } from "./PasskeyPour";
 import { PasskeyResend } from "./PasskeyResend";
 import { StatusIcon } from "./StatusIcon";
 import { SHAKE_MS } from "./timing";
@@ -20,8 +21,26 @@ function progress(p: Passkey, plain: boolean) {
   return "";
 }
 
+/**
+ * Every line the status row can say, for the versions that give it verdicts. They are
+ * all rendered as hidden sizers in the same grid cell: one sizer only sets a minimum, so
+ * a longer label grew the lane — and because the row is centred, the icon and the text
+ * jumped sideways between states. With all of them in, the lane is the widest from the
+ * first frame and never changes.
+ */
+const VERDICT_LINES = ["Verifying...", "Authenticated", "Incorrect code", "Missing digits", "Not verified"];
+
+/** what the status row says once a refusal's mark has landed */
+function verdict(p: Passkey) {
+  if (p.problem === "incomplete") return "Missing digits";
+  if (p.problem === "offline") return "Not verified";
+  return "Incorrect code";
+}
+
 /** failures read underneath, aligned to the strip's left edge */
-function problem(p: Passkey, guarded: boolean, length: number) {
+function problem(p: Passkey, guarded: boolean, length: number, inRow: boolean) {
+  // the row says it; a second sentence under the strip would say it twice
+  if (inRow) return "";
   /* Guarded: every case gets its own sentence, because they ask for different things.
      "Enter all N digits" is an instruction and the code is fine so far; "Incorrect code"
      means retype it; "Couldn't verify" means the code was never judged and pressing again
@@ -81,7 +100,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
     onVerify, onResend, resendCooldown, onSuccess,
   });
   const { status, shake, focusAt } = passkey;
-  const below = problem(passkey, b.guarded, length);
+  const below = problem(passkey, b.guarded, length, b.verdictInRow);
   // success runs in two phases: the cells leave first, then the mark arrives
   const [phase, setPhase] = useState<"none" | "clearing" | "collapsing" | "done" | "settled">("none");
   const statusRef = useRef<HTMLParagraphElement>(null);
@@ -92,6 +111,36 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
   const sequenced = useRef(false);
 
   useEffect(() => { if (autoFocus) focusAt(0); }, [autoFocus, focusAt]);
+
+  /*
+   * A refusal, closed the same way a success is.
+   *
+   * "closing" from the moment the verdict is in: the spinner stays, and its spokes run
+   * the same 280ms gather a success does — still green, because the close belongs to both
+   * answers and colouring it early gives the verdict away. "mark" at 360ms: the dot opens
+   * into a red "!", and the label, the focused cell and the shake all land on that frame.
+   *
+   * Derived in the render rather than set in an effect, so the frame the error arrives is
+   * already "closing". Set a frame later, the row would have had nothing to say for that
+   * frame and the icon would unmount and remount under the gather.
+   *
+   * Keyed on the shake counter, which moves on every rejection — so refusing the same
+   * code twice closes and marks twice rather than sitting on the first mark.
+   */
+  const refused = b.verdictInRow
+    && (passkey.problem === "incorrect" || passkey.problem === "offline");
+  const [markedAt, setMarkedAt] = useState(-1);
+  useEffect(() => {
+    if (!refused) return;
+    const now = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const id = window.setTimeout(() => setMarkedAt(shake), now ? 0 : 360);
+    return () => clearTimeout(id);
+  }, [refused, shake]);
+  // a code with a gap was never sent, so there is no loader to close — it marks at once
+  const fail: "closing" | "mark" | null = !b.verdictInRow ? null
+    : passkey.problem === "incomplete" ? "mark"
+    : refused ? (markedAt === shake ? "mark" : "closing")
+    : null;
 
   /* The red lasts exactly as long as the shake: the colour and the movement are one
      event, so they start and stop on the same frames rather than one outliving the other.
@@ -192,7 +241,10 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
 
   // the sequenced styles hold the strip so its space stays reserved to travel into
   const stripMounted = sequenced.current || phase === "none" || phase === "clearing";
-  const above = phase === "done" || phase === "settled" ? "Authenticated" : progress(passkey, b.plainProgress);
+  const above = phase === "done" || phase === "settled" ? "Authenticated"
+    : fail === "closing" ? "Verifying..."        // held until the mark, not replaced early
+    : fail === "mark" ? verdict(passkey)
+    : progress(passkey, b.plainProgress);
 
   /*
    * Hold the row still when the label changes width, and pay the difference inside the
@@ -262,6 +314,9 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
       data-editcaret={b.editCaret ? "" : undefined}
       data-guarded={b.guarded ? "" : undefined}
       data-plain={b.plainProgress ? "" : undefined}
+      data-pours={b.pours ? "" : undefined}
+      data-verdicts={b.verdictInRow ? "" : undefined}
+      data-fail={fail ?? undefined}
       data-flashes={flashes ? "" : undefined}
       data-flash={flash ? "" : undefined}
       data-phase={phase === "none" ? undefined : phase}
@@ -302,11 +357,13 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
         {above && (
           <>
             <StatusIcon status={status} origin={b.handOff === "origin"}
-              filled={b.filledMark} />
+              filled={b.filledMark} fail={fail} />
             <span className="pk-status-label">
               {/* holds the lane open at the width of the longest line from the start, so
                   the icon beside it never shifts sideways when the text changes */}
-              <span className="pk-status-sizer" aria-hidden="true">Authenticated</span>
+              {(b.verdictInRow ? VERDICT_LINES : ["Authenticated"]).map((line) => (
+                <span className="pk-status-sizer" aria-hidden="true" key={line}>{line}</span>
+              ))}
               {/* aria-hidden: the live region announces the line that has arrived, not the
                   one on its way out, and never the frames in between */}
               {leaving && leaving !== above && (
@@ -337,6 +394,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
           fluidBlock={b.fluidDigits}
           smooth={b.smoothSend}
           clears={b.sendClearsOnSubmit}
+          shakeOn={b.verdictInRow ? (fail === "mark" ? shake : 0) : undefined}
         />
       )}
       {/* keyed on the shake counter so the copy re-enters on every rejection, even when
@@ -352,6 +410,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
         </p>
       )}
       <PasskeyResend passkey={passkey} guarded={b.guarded} to={resendTo} />
+      <PasskeyPour enabled={b.pours && send} status={status} rootRef={rootRef} />
     </div>
   );
 }

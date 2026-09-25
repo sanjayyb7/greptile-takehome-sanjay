@@ -19,7 +19,7 @@
  * aside rather than deleted, so their behaviour is still built and still reachable from the
  * predicates below. Putting one back on the row is a single line here.
  */
-export type Version = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17;
+export type Version = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
 
 export const VERSIONS: { id: Version; name: string; note: string; label?: string; final?: true }[] = [
   { id: 13, name: "Vanishing letters", note: "The digit rises in through the cell's bottom edge, and slides back down past it" },
@@ -30,6 +30,7 @@ export const VERSIONS: { id: Version; name: string; note: string; label?: string
   { id: 5, name: "Fluid", note: "The box separates from the strip like liquid — a neck thins and breaks" },
   { id: 8, name: "Smooth, box clears", note: "The box opens and clears in one move; the press sends it away, and every case is answered out loud" },
   { id: 14, name: "Filled circle", note: "Says where the code went before asking for it back. I changed the mark you gave to a filled circle to match the loader, and dropped the ellipsis" },
+  { id: 18, name: "Liquid pour", note: "The send box is liquid: pressing it pours it up into the loader, and the loader closes into the answer — a tick, or a red \u201c!\u201d" },
 ];
 
 /*
@@ -206,7 +207,7 @@ const steadyHeight = (v: Version) => v === 8 || v >= 14;
  * The colour and the movement are one event, so they start and stop on the same frames.
  * What carries the rejection from then on is the line underneath, which is what it is for.
  */
-const flashesError = (v: Version) => v === 8 || v >= 14;
+const flashesError = (v: Version) => v === 8 || (v >= 14 && v !== 18);
 
 
 /**
@@ -238,7 +239,7 @@ const editCaret = (v: Version) => v === 8 || v >= 14;
  *
  * So it is not a variant any more. It is what eight is.
  */
-const guarded = (v: Version) => v === 8 || v === 14;
+const guarded = (v: Version) => v === 8 || v === 14 || v === 18;
 
 /**
  * "Verifying" without the trailing ellipsis.
@@ -260,6 +261,28 @@ const plainProgress = (v: Version) => v === 14;
  * confirmation has to name it rather than only afterwards.
  */
 const intro = (v: Version) => v === 14;
+
+/**
+ * One piece of green carries the whole transaction.
+ *
+ * The send box is squeezed out of the strip as liquid (that part is eight's), and here
+ * pressing it pours it up into the loader: the box balls up, a neck stretches toward the
+ * status slot, snaps at the box end, and the drop arrives as a teardrop that splashes
+ * into spokes already turning. Nothing appears or disappears between the press and the
+ * verdict — the green that was pressed is the green that spins. See PasskeyPour.
+ */
+const pours = (v: Version) => v === 18;
+
+/**
+ * The verdict is said in the status row, and a refusal closes the loader into a red "!".
+ *
+ * A success closes the spinner into a tick; a refusal used to leave it and put a sentence
+ * under the strip instead, so the two answers arrived in two different places. Here both
+ * come out of the same gather: the spokes close to a dot, still green, and the dot opens
+ * into the answer. Everything red lands on that frame — the mark, the label, the focused
+ * cell — and the shake with it, so it reads as one event.
+ */
+const verdictInRow = (v: Version) => v === 18;
 
 /**
  * Everything that differs between the explorations, gathered into one value.
@@ -296,6 +319,8 @@ export type Behaviour = {
   guarded: boolean;
   plainProgress: boolean;
   intro: boolean;
+  pours: boolean;
+  verdictInRow: boolean;
 };
 
 export const behaviourOf = (v: Version): Behaviour => ({
@@ -320,4 +345,6 @@ export const behaviourOf = (v: Version): Behaviour => ({
   guarded: guarded(v),
   plainProgress: plainProgress(v),
   intro: intro(v),
+  pours: pours(v),
+  verdictInRow: verdictInRow(v),
 });
