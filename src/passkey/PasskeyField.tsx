@@ -242,7 +242,7 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
   // the sequenced styles hold the strip so its space stays reserved to travel into
   const stripMounted = sequenced.current || phase === "none" || phase === "clearing";
   const above = phase === "done" || phase === "settled" ? "Authenticated"
-    : fail === "closing" ? "Verifying..."        // held until the mark, not replaced early
+    : fail === "closing" ? progress({ ...passkey, status: "verifying" }, b.plainProgress)   // held until the mark
     : fail === "mark" ? verdict(passkey)
     : progress(passkey, b.plainProgress);
 
@@ -278,7 +278,9 @@ export function PasskeyField({ autoFocus = true, autoSubmit = false, send = true
     const now = el.offsetLeft;
     const prev = lastLeft.current;
     lastLeft.current = now;
-    const dx = prev === null ? 0 : prev - now;
+    // only for the success, whose drop carries the offset away; a verdict stays where it
+    // lands, so it is simply re-centred on the strip
+    const dx = prev === null || above !== "Authenticated" ? 0 : prev - now;
     if (dx) el.style.setProperty("--pk-status-dx", `${dx}px`);
     else el.style.removeProperty("--pk-status-dx");
   }, [above, b.plainProgress]);
