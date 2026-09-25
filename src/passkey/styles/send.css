@@ -39,7 +39,7 @@
    is a box, not to the thing still arriving. 260ms: the pk-send-in duration. */
 /* 260ms is the unfold's own length, and the fallback for the versions that just unfold.
    Any version whose box is driven from JS hands its real length over in the variable. */
-.pk-send svg { animation: pk-send-arrow 200ms var(--ease-out) var(--pk-arrow-delay, 260ms) both; }
+.pk-send svg { animation: pk-send-arrow 320ms var(--ease-out) var(--pk-arrow-delay, 260ms) both; }
 
 /* Pasted, the code lands complete and there is none of the placing that typing does to
    watch — so the one move left, out of the last cell and into the box, is given the
@@ -59,13 +59,20 @@
   animation: pk-send-arrow-out 120ms var(--ease-out) both; }
 @keyframes pk-send-arrow-out {
   from { opacity: 1; translate: 0 0; }
-  to   { opacity: 0; translate: -8px 0; }
+  to   { opacity: 0; translate: -16px 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   /* JS skips the drop, so the box has to be told it has already landed */
   .passkey[data-version="4"] .pk-send { scale: 1 1; translate: 0 0; opacity: 1; }
 }
-@keyframes pk-send-arrow { from { opacity: 0; translate: -8px 0; } to { opacity: 1; translate: 0 0; } }
+/* It travels in, the way the block came: from the box's left side, 24px — the arrow's own
+   margin inside the box, so it never crosses the edge — and sharpens as it lands. At 8px
+   it only faded, and read as a thing being unhidden rather than arriving. */
+@keyframes pk-send-arrow {
+  from { opacity: 0; translate: -24px 0; filter: blur(2px); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; translate: 0 0; filter: blur(0); }
+}
 /* counter-scales the arrow so the box's horizontal squeeze never reaches it */
 /* gated: a tap on a touch screen fires a hover that then sticks, leaving the box looking
    pressed long after the finger has gone */
